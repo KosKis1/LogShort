@@ -1,0 +1,120 @@
+================================================================================
+СТРУКТУРА ПРОЕКТА
+================================================================================
+
+[1] КОРНЕВАЯ ПАПКА (*.py файлы):
+--------------------------------------------------------------------------------
+   _Start.py                                                 491 байт
+   _collect_debug.py                                       12906 байт
+   _collect_for_claude.py                                  17767 байт
+   _diagnose.py                                             4350 байт
+   _diagnose_scanner.py                                     8833 байт
+   _patch_chart_integration.py                             10144 байт
+   _patch_scanner_v2.py                                     5161 байт
+   _patch_step2.py                                         17535 байт
+   _run_with_debug_logs.py                                  2279 байт
+   auto-short_v095_with_trainer_bridge.py                 133204 байт
+   check_v2.py                                              1576 байт
+   collect_logs_for_gpt.py                                  1901 байт
+   collect_logs_v2.py                                       8045 байт
+   collect_structure.py                                     4989 байт
+   diagnose_step2.py                                        7046 байт
+   diagnose_v2_deep.py                                      6487 байт
+   fix_v2_patch.py                                          8758 байт
+   keys.py                                                   853 байт
+   main.py                                                 33745 байт
+   teleg.py                                                  618 байт
+   trainer_live.py                                         41151 байт
+
+[2] ПАПКА ui/:
+--------------------------------------------------------------------------------
+   __init__.py                                               325 байт
+   chart_window.py                                         16855 байт
+   dialogs.py                                               3135 байт
+   styles.py                                                2388 байт
+   table_headers_v2.py                                     18020 байт
+
+[3] ПАПКА core/:
+--------------------------------------------------------------------------------
+   __init__.py                                               351 байт
+   bridge.py                                                8322 байт
+   bybit.py                                                 1621 байт
+   bybit_client.py                                          8411 байт
+   config.py                                                3100 байт
+   config_v2.py                                             8627 байт
+   engine.py                                                2457 байт
+   engine_v2.py                                            21825 байт
+   gates.py                                                18371 байт
+   math_utils.py                                            7964 байт
+   ml_logger.py                                            14417 байт
+   params.py                                                2977 байт
+   params_ml.py                                             7025 байт
+   preselect.py                                             7519 байт
+   short_math.py                                            8070 байт
+   telegram.py                                              3131 байт
+   types.py                                                 6664 байт
+   utils.py                                                  818 байт
+
+[4] ПОИСК CLASS MAINWINDOW:
+--------------------------------------------------------------------------------
+   НАЙДЕН в: auto-short_v095_with_trainer_bridge.py
+   Строка 1488: class MainWindow(QMainWindow):
+   НАЙДЕН в: collect_structure.py
+   Строка 63: if 'class MainWindow' in content:
+   НАЙДЕН в: main.py
+   Строка 62: class MainWindow(QMainWindow):
+
+[5] ПОИСК _tick_status_lines:
+--------------------------------------------------------------------------------
+   Файл: auto-short_v095_with_trainer_bridge.py
+      Строка 2129: self._status_tick_timer.timeout.connect(self._tick_status_lines)
+      Строка 2142: def _tick_status_lines(self):
+      Строка 2252: # in the dedicated UNIVERSE/TOP lines updated by _tick_status_lines().
+   Файл: collect_structure.py
+      Строка 75: # 5. Ищем где вызывается _tick_status_lines
+      Строка 76: results.append("[5] ПОИСК _tick_status_lines:")
+      Строка 86: if '_tick_status_lines' in content:
+      Строка 90: if '_tick_status_lines' in line:
+   Файл: fix_v2_patch.py
+      Строка 138: # Ищем конец метода _tick_status_lines
+      Строка 145: if "def _tick_status_lines(self):" in line:
+   Файл: _patch_step2.py
+      Строка 230: def patch_tick_status_lines(content: str) -> str:
+      Строка 231: """Добавляет обновление прогресс-баров V2 в _tick_status_lines."""
+      Строка 233: # Ищем начало функции _tick_status_lines
+      Строка 234: old_func_start = '''    def _tick_status_lines(self):
+      Строка 238: new_func_start = '''    def _tick_status_lines(self):
+      Строка 250: print("⚠️ _tick_status_lines уже обновлён, пропускаем")
+      Строка 255: print("✅ _tick_status_lines обновлён")
+      Строка 257: print("❌ Не найден _tick_status_lines")
+      Строка 321: # Ищем место для вставки (после _tick_status_lines)
+      Строка 381: content = patch_tick_status_lines(content)
+
+[6] ПОИСК lbl_top200_counter:
+--------------------------------------------------------------------------------
+   Файл: auto-short_v095_with_trainer_bridge.py (8 упоминаний)
+   Файл: collect_structure.py (4 упоминаний)
+   Файл: diagnose_v2_deep.py (3 упоминаний)
+   Файл: fix_v2_patch.py (2 упоминаний)
+   Файл: _patch_step2.py (7 упоминаний)
+
+[7] СОДЕРЖИМОЕ _Start.py:
+--------------------------------------------------------------------------------
+   1: # ===== _Start.py =====
+   2: # Запуск сканера напрямую (без меню)
+   3: # ==================================
+   4: 
+   5: import os
+   6: import sys
+   7: import subprocess
+   8: 
+   9: BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+   10: 
+   11: if __name__ == "__main__":
+   12:     print("=" * 50)
+   13:     print("  Bybit SHORT Scanner v3.x")
+   14:     print("=" * 50)
+   15:     print("\n🚀 Запуск сканера...")
+   16: 
+   17:     script = os.path.join(BASE_DIR, "main.py")
+   18:     subprocess.run([sys.executable, script], cwd=BASE_DIR)

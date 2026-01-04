@@ -1,0 +1,190 @@
+================================================================================
+АНАЛИЗ main.py
+================================================================================
+
+[1] ТЕКУЩИЕ ИМПОРТЫ (первые 50 строк):
+--------------------------------------------------------------------------------
+   5: import os
+   6: import sys
+   7: import time
+   8: import json
+   9: import subprocess
+   10: from typing import Dict, List, Optional
+   12: from PySide6.QtCore import Qt, QTimer, QEvent, QObject
+   13: from PySide6.QtGui import QColor, QFont
+   14: from PySide6.QtWidgets import (
+   21: from core.config import get_config, AppConfig
+   22: from core.types import CoinRow
+   23: from core.bybit_client import BybitClient, get_client
+   24: from core.bridge import write_bridge_snapshot
+   25: from core.ml_logger import get_ml_logger
+   26: from strategies import get_strategy
+   27: from workers import ScannerWorker, CandidatesUpdateWorker
+   28: from ui.styles import (
+   32: from ui.dialogs import CountdownDialog
+   36:     from ui.chart_window import show_chart
+   38:     print("[DEBUG] chart_window imported successfully")
+
+[2] CLASS MAINWINDOW:
+--------------------------------------------------------------------------------
+   Строка 62: class MainWindow(QMainWindow):
+   63:     """Главное окно сканера."""
+   64: 
+   65:     def __init__(self):
+   66:         super().__init__()
+   67:         self.setWindowTitle("Bybit SHORT Scanner — Modular v3.0")
+   68:         self.resize(*SCANNER_SIZE)
+   69:         self.setMinimumSize(1400, 800)
+   70: 
+   71:         # Компоненты
+   72:         self.client = get_client()
+
+[3] ТАЙМЕРЫ И TICK МЕТОДЫ:
+--------------------------------------------------------------------------------
+   12: from PySide6.QtCore import Qt, QTimer, QEvent, QObject
+   93:         self.auto_timer = QTimer(self)
+   94:         self.auto_timer.setInterval(AUTO_RECALC_MIN * 60 * 1000)
+   95:         self.auto_timer.timeout.connect(self._start_countdown)
+   96:         self.auto_timer.start()
+   98:         self.countdown_timer: Optional[QTimer] = None
+   116:         self.full_countdown_timer = QTimer(self)
+   117:         self.full_countdown_timer.setInterval(1000)
+   118:         self.full_countdown_timer.timeout.connect(self._tick_full_countdown)
+   119:         self.full_countdown_timer.start()
+   121:         self.cand_countdown_timer = QTimer(self)
+   122:         self.cand_countdown_timer.setInterval(1000)
+   123:         self.cand_countdown_timer.timeout.connect(self._tick_cand_countdown)
+   124:         self.cand_countdown_timer.start()
+   183:         self.lbl_full_timer = QLabel("До пересчёта: 120 сек")
+   184:         self.lbl_full_timer.setStyleSheet("color:#cfcfcf; font-size:12px;")
+   185:         top_layout.addWidget(self.lbl_full_timer)
+   217:         self.lbl_cand_timer = QLabel("До обновления: 10 сек")
+   218:         self.lbl_cand_timer.setStyleSheet("color:#cfcfcf; font-size:12px;")
+   219:         cand_layout.addWidget(self.lbl_cand_timer)
+   260:             self.lbl_full_timer.setStyleSheet("color:#ffd700; font-size:12px; fo
+   261:             self.lbl_full_timer.setText("Пересчёт: 0/…")
+   280:             self.lbl_full_timer.setStyleSheet("color:#ffd700; font-size:12px; fo
+   281:             self.lbl_full_timer.setText(f"Пересчёт: {current}/{total}")
+   292:             self.lbl_full_timer.setStyleSheet("color:#cfcfcf; font-size:12px;")
+   293:             self.lbl_full_timer.setText(f"До пересчёта: {self._full_countdown} с
+   622:         self.countdown_timer = QTimer(self)
+   623:         self.countdown_timer.setInterval(1000)
+   624:         self.countdown_timer.timeout.connect(self._countdown_tick)
+   625:         self.countdown_timer.start()
+   627:     def _countdown_tick(self):
+   641:         if self.countdown_timer:
+   642:             self.countdown_timer.stop()
+   643:             self.countdown_timer = None
+   674:     def _tick_full_countdown(self):
+   684:             self.lbl_full_timer.setStyleSheet("color:#cfcfcf; font-size:12px;")
+   685:             self.lbl_full_timer.setText(f"До пересчёта: {self._full_countdown} с
+   689:     def _tick_cand_countdown(self):
+   702:             self.lbl_cand_timer.setStyleSheet("color:#cfcfcf; font-size:12px;")
+   703:             self.lbl_cand_timer.setText(f"До обновления: {self._cand_countdown} 
+   727:             self.lbl_cand_timer.setStyleSheet("color:#ffd700; font-size:12px; fo
+   728:             self.lbl_cand_timer.setText("🔄 Сканирование...")
+   748:             self.lbl_cand_timer.setText(f"🔄 {current}/{total} | {symbol}")
+   775:             self.lbl_cand_timer.setStyleSheet("color:#22c55e; font-size:12px;")
+   776:             self.lbl_cand_timer.setText(f"✓ Обновлено | След: {self._cand_countd
+   788:             self.lbl_cand_timer.setStyleSheet("color:#ef4444; font-size:12px;")
+   789:             self.lbl_cand_timer.setText(f"❌ Ошибка | След: {self._cand_countdown
+   831:             self.auto_timer.stop()
+   832:             self.full_countdown_timer.stop()
+   833:             self.cand_countdown_timer.stop()
+   834:             if self.countdown_timer:
+   835:                 self.countdown_timer.stop()
+   882:     QTimer.singleShot(1000, window._start_scan)
+
+[4] МЕТКИ (lbl_):
+--------------------------------------------------------------------------------
+   139:         self.lbl_status = QLabel("Готово")
+   143:         self.lbl_progress = QLabel("UNIVERSE: 0/200")
+   179:         self.lbl_top200 = QLabel("📊 TOP 200 по обороту")
+   183:         self.lbl_full_timer = QLabel("До пересчёта: 120 сек")
+   213:         self.lbl_candidates = QLabel("🎯 Кандидаты на SHORT")
+   217:         self.lbl_cand_timer = QLabel("До обновления: 10 сек")
+   258:         self.lbl_status.setText("⏳ Сканирование...")
+   261:             self.lbl_full_timer.setText("Пересчёт: 0/…")
+   278:         self.lbl_progress.setText(f"UNIVERSE: {current}/{total} | {symbol}")
+   281:             self.lbl_full_timer.setText(f"Пересчёт: {current}/{total}")
+   289:         self.lbl_status.setText(f"✅ Готово ({len(results)} монет)")
+   293:             self.lbl_full_timer.setText(f"До пересчёта: {self._full_countdown} с
+   310:         self.lbl_status.setText("❌ Ошибка")
+   389:         self.lbl_top200.setText(f"📊 TOP 200 | Страница {self.current_page + 1}/{
+   481:         self.lbl_candidates.setText(f"🎯 Кандидаты на SHORT ({len(candidates)})")
+   638:         self.lbl_status.setText("Авто-пересчёт отменён")
+   685:             self.lbl_full_timer.setText(f"До пересчёта: {self._full_countdown} с
+   703:             self.lbl_cand_timer.setText(f"До обновления: {self._cand_countdown} 
+   728:             self.lbl_cand_timer.setText("🔄 Сканирование...")
+   748:             self.lbl_cand_timer.setText(f"🔄 {current}/{total} | {symbol}")
+   776:             self.lbl_cand_timer.setText(f"✓ Обновлено | След: {self._cand_countd
+   789:             self.lbl_cand_timer.setText(f"❌ Ошибка | След: {self._cand_countdown
+
+[5] ЗАГОЛОВКИ ТАБЛИЦ (headers):
+--------------------------------------------------------------------------------
+   189:         self.tbl_main.setHorizontalHeaderLabels([
+   223:         self.tbl_cand.setHorizontalHeaderLabels([
+   586:         print(f"[DEBUG] Header clicked: col={col}")
+
+[6] УПОМИНАНИЯ V2:
+--------------------------------------------------------------------------------
+   НЕ НАЙДЕНО - V2 ещё не интегрирован в main.py!
+
+[7] ТЕКСТ СТАТУСА (пересчёт/обновление):
+--------------------------------------------------------------------------------
+   111:         # Таймеры UI (120с полный пересчёт)
+   113:         self._cand_countdown = 5  # Начальная задержка перед первым обновлением
+   114:         self._cand_update_delay = 5  # Задержка между обновлениями (сек)
+   183:         self.lbl_full_timer = QLabel("До пересчёта: 120 сек")
+   217:         self.lbl_cand_timer = QLabel("До обновления: 10 сек")
+   261:             self.lbl_full_timer.setText("Пересчёт: 0/…")
+   281:             self.lbl_full_timer.setText(f"Пересчёт: {current}/{total}")
+   293:             self.lbl_full_timer.setText(f"До пересчёта: {self._full_countdown} с
+   638:         self.lbl_status.setText("Авто-пересчёт отменён")
+   685:             self.lbl_full_timer.setText(f"До пересчёта: {self._full_countdown} с
+   690:         """Обновление кандидатов — ждём 5 сек после завершения, потом снова запр
+   703:             self.lbl_cand_timer.setText(f"До обновления: {self._cand_countdown} 
+   708:         """Запуск фонового обновления кандидатов."""
+   740:         self.cand_worker.coin_updated.connect(self._on_coin_updated)  # Обновлен
+   746:         """Прогресс обновления кандидатов."""
+   753:         """Монета обновлена — обновляем данные (UI обновится в конце)."""
+   758:         """Обновление кандидатов завершено — ждём 5 сек и снова обновляем."""
+   771:         # Устанавливаем таймер на 5 секунд до следующего обновления
+   776:             self.lbl_cand_timer.setText(f"✓ Обновлено | След: {self._cand_countd
+   783:         """Ошибка обновления кандидатов."""
+   845:         # Останавливаем воркер обновления кандидатов
+
+[8] МЕТОДЫ КЛАССА MAINWINDOW (def внутри класса):
+--------------------------------------------------------------------------------
+   65: def __init__(self):
+   129: def _build_ui(self):
+   244: def _apply_styles(self):
+   253: def _start_scan(self):
+   277: def _on_progress(self, current: int, total: int, symbol: str):
+   285: def _on_finished(self, results: Dict[str, CoinRow]):
+   307: def _on_error(self, msg: str):
+   315: def _render_main_table(self):
+   317: def get_sort_key(r: CoinRow):
+   391: def _render_candidates(self):
+   483: def _add_to_candidates(self, row: CoinRow):
+   492: def _on_double_click(self, row_idx: int, col_idx: int):
+   538: def _on_double_click_cand(self, row_idx: int, col_idx: int):
+   584: def _on_header_click(self, col: int):
+   598: def _prev_page(self):
+   603: def _next_page(self):
+   612: def _start_countdown(self):
+   627: def _countdown_tick(self):
+   636: def _cancel_countdown(self):
+   640: def _stop_countdown(self):
+   650: def _save_state(self):
+   662: def _load_state(self):
+   674: def _tick_full_countdown(self):
+   689: def _tick_cand_countdown(self):
+   707: def _start_cand_update(self):
+   745: def _on_cand_progress(self, current: int, total: int, symbol: str):
+   752: def _on_coin_updated(self, symbol: str, row: CoinRow):
+   757: def _on_cand_finished(self, updated_rows: Dict[str, CoinRow]):
+   782: def _on_cand_error(self, msg: str):
+   793: def _toggle_live(self):
+   825: def _exit_app(self):
+   864: def closeEvent(self, event):

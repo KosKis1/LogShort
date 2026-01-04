@@ -1,0 +1,158 @@
+{
+  "ts": 1767454374,
+  "current_page": 0,
+  "current_period": "3h",
+  "sort_mode": "base",
+  "sort_col": 3,
+  "sort_desc": true,
+  "candidates": [
+    "MONUSDT",
+    "1000000MOGUSDT",
+    "LABUSDT",
+    "1000LUNCUSDT",
+    "LYNUSDT",
+    "EIGENUSDT",
+    "FUSDT",
+    "FLOWUSDT",
+    "ATOMUSDT",
+    "BCHUSDT",
+    "TRXUSDT",
+    "FLUIDUSDT",
+    "MOVEUSDT",
+    "SUIUSDT",
+    "OPUSDT",
+    "DOGEUSDT",
+    "XTZUSDT",
+    "GUNUSDT",
+    "HUSDT",
+    "ZORAUSDT",
+    "WLFIUSDT",
+    "RENDERUSDT",
+    "ARCUSDT",
+    "XMRUSDT",
+    "MUSDT",
+    "1000PEPEUSDT",
+    "TRUMPUSDT",
+    "DYDXUSDT",
+    "STORJUSDT"
+  ],
+  "selected_symbol": "",
+  "candidates_data": {
+    "MONUSDT": {
+      "added_at": 1767452653.6322134,
+      "score": 58.35876568094189
+    },
+    "1000000MOGUSDT": {
+      "added_at": 1767452791.0816753,
+      "score": 63.2827467198632
+    },
+    "LABUSDT": {
+      "added_at": 1767452923.576452,
+      "score": 50.63418631876242
+    },
+    "1000LUNCUSDT": {
+      "added_at": 1767453056.9265509,
+      "score": 52.34619450799431
+    },
+    "LYNUSDT": {
+      "added_at": 1767453056.9265509,
+      "score": 55.19283946344814
+    },
+    "EIGENUSDT": {
+      "added_at": 1767453121.8240664,
+      "score": 52.79906268927677
+    },
+    "FUSDT": {
+      "added_at": 1767453121.8240664,
+      "score": 48.89425922673263
+    },
+    "FLOWUSDT": {
+      "added_at": 1767453473.0006492,
+      "score": 54.99230403499356
+    },
+    "ATOMUSDT": {
+      "added_at": 1767453501.8331254,
+      "score": 51.83588209005282
+    },
+    "BCHUSDT": {
+      "added_at": 1767453571.828031,
+      "score": 60.67972700257061
+    },
+    "TRXUSDT": {
+      "added_at": 1767453571.828031,
+      "score": 58.08079033913186
+    },
+    "FLUIDUSDT": {
+      "added_at": 1767453571.828031,
+      "score": 54.13122551356031
+    },
+    "MOVEUSDT": {
+      "added_at": 1767453571.828031,
+      "score": 56.32142630137751
+    },
+    "SUIUSDT": {
+      "added_at": 1767453571.828031,
+      "score": 52.13453052796609
+    },
+    "OPUSDT": {
+      "added_at": 1767453571.828031,
+      "score": 49.75397793081145
+    },
+    "DOGEUSDT": {
+      "added_at": 1767453571.828031,
+      "score": 52.167244327298576
+    },
+    "XTZUSDT": {
+      "added_at": 1767453571.828031,
+      "score": 49.54288277195222
+    },
+    "GUNUSDT": {
+      "added_at": 1767453611.4072669,
+      "score": 55.50746681774762
+    },
+    "HUSDT": {
+      "added_at": 1767453743.6926396,
+      "score": 47.932412358791
+    },
+    "ZORAUSDT": {
+      "added_at": 1767453782.949969,
+      "score": 53.38038688935141
+    },
+    "WLFIUSDT": {
+      "added_at": 1767453862.5297327,
+      "score": 64.07100809788271
+    },
+    "RENDERUSDT": {
+      "added_at": 1767453874.0428991,
+      "score": 49.35667631675002
+    },
+    "ARCUSDT": {
+      "added_at": 1767453874.0428991,
+      "score": 48.08463853143457
+    },
+    "XMRUSDT": {
+      "added_at": 1767454012.285779,
+      "score": 47.14551194710061
+    },
+    "MUSDT": {
+      "added_at": 1767454363.856422,
+      "score": 54.73377702803119
+    },
+    "1000PEPEUSDT": {
+      "added_at": 1767454363.856422,
+      "score": 49.254145532591416
+    },
+    "TRUMPUSDT": {
+      "added_at": 1767454363.856422,
+      "score": 47.644254623382714
+    },
+    "DYDXUSDT": {
+      "added_at": 1767454363.856422,
+      "score": 47.090789054333776
+    },
+    "STORJUSDT": {
+      "added_at": 1767454373.0230656,
+      "score": 47.8026242602059
+    }
+  }
+}

@@ -1,0 +1,1 @@
+[03:30:40] fetch_prices_batch error: HTTPSConnectionPool(host='api.bybit.com', port=443): Max retries exceeded with url: /v5/market/tickers?category=linear (Caused by ReadTimeoutError("HTTPSConnectionPool(host='api.bybit.com', port=443): Read timed out. (read timeout=5.0)"))

@@ -1,0 +1,109 @@
+================================================================================
+ГЛУБОКАЯ ДИАГНОСТИКА V2 UI - 2026-01-03 13:01:45
+================================================================================
+
+[1] ПРОВЕРКА V2_AVAILABLE:
+   ✓ Строка 330: V2_AVAILABLE = True
+   ✗ Строка 333: V2_AVAILABLE = False <- ПРОБЛЕМА!
+   ✗ Строка 334: V2_AVAILABLE = False <- ПРОБЛЕМА!
+   ✗ Строка 335: V2_AVAILABLE = False <- ПРОБЛЕМА!
+   ✗ Строка 336: V2_AVAILABLE = False <- ПРОБЛЕМА!
+   ✗ Строка 337: V2_AVAILABLE = False <- ПРОБЛЕМА!
+   ✗ Строка 338: V2_AVAILABLE = False <- ПРОБЛЕМА!
+   Строка 330: V2_AVAILABLE = True
+   Строка 333: V2_AVAILABLE = False
+   Строка 334: V2_AVAILABLE = False
+   Строка 335: V2_AVAILABLE = False
+   Строка 336: V2_AVAILABLE = False
+   Строка 337: V2_AVAILABLE = False
+   Строка 338: V2_AVAILABLE = False
+
+[2] МЕТОД _update_v2_progress_bars:
+   ✓ Найден на строке 2174
+   Содержимое метода:
+      2174:     def _update_v2_progress_bars(self):
+      2175:         """Обновление прогресс-баров V2 в заголовках таблиц"""
+      2176:         try:
+      2177:             from core.engine_v2 import update_scan_timers, get_scan_state
+      2178:             from ui.table_headers_v2 import get_header_manager
+      2179:             from core.config_v2 import USE_NEW_UI
+      2180:             
+      2181:             if not USE_NEW_UI:
+      2182:                 return
+      2183:             
+      2184:             # Обновляем таймеры
+      2185:             update_scan_timers()
+      2186:             scan_state = get_scan_state()
+      2187:             
+      2188:             # Получаем header manager
+
+[3] ВЫЗОВ _update_v2_progress_bars:
+   ✓ Вызов на строке 2146: self._update_v2_progress_bars()
+   Контекст:
+          2143:         # V2: Обновляем прогресс-бары если доступны
+          2144:         if V2_AVAILABLE and USE_NEW_UI:
+          2145:             try:
+      >>> 2146:                 self._update_v2_progress_bars()
+          2147:             except Exception:
+          2148:                 pass
+          2149:         
+
+[4] МЕТОД tick_status_line (где вызывается обновление):
+   Найден на строке 2142
+   Содержимое:
+      2142:     def _tick_status_lines(self):
+      2143:         # V2: Обновляем прогресс-бары если доступны
+      2144:         if V2_AVAILABLE and USE_NEW_UI:
+      2145:             try:
+      2146:                 self._update_v2_progress_bars()
+      2147:             except Exception:
+      2148:                 pass
+      2149:         
+      2150:         # Universe line
+      2151:         try:
+      2152:             processed = getattr(self, "_universe_done", 0)
+      2153:             total = getattr(self, "_universe_total", 200)
+      2154:             upd = getattr(self, "_last_universe_update", None)
+      2155:             upd_str = time.strftime("%H:%M:%S", time.localtime(upd)) if upd else "--:--:--
+      2156:             left = int(self._next_scan_at - time.time()) if getattr(self, "_next_scan_at",
+      2157:             left_str = self._fmt_mmss(left) if getattr(self, "_next_scan_at", None) else "
+      2158:             self.lbl_progress.setText(f"UNIVERSE: {processed}/{total} | обновлено {upd_str
+      2159:         except Exception:
+      2160:             pass
+      2161: 
+      2162:         # Top line (fixed base sort key per TЗ)
+      2163:         try:
+      2164:             left = int(self._next_scan_at - time.time()) if getattr(self, "_next_scan_at",
+      2165:             left_str = self._fmt_mmss(left) if getattr(self, "_next_scan_at", None) else "
+      2166:             updated = getattr(self, "_top_updated_n", 0)
+      2167:             self.lbl_reco.setText(
+      2168:                 f"TOP: обновлены {updated} | сортировка: Short% ↓, Candidate% ↓, Conf% ↓ |
+      2169:             )
+      2170:         except Exception:
+      2171:             pass
+
+[5] ЗАГОЛОВКИ ТАБЛИЦ (TABLE1_HEADERS / TABLE2_HEADERS):
+   Строка 324: get_header_manager, TABLE1_HEADERS, TABLE2_HEADERS,
+   Строка 1646: headers = TABLE1_HEADERS  # Из table_headers_v2.py
+
+[6] МЕТКИ lbl_top200_counter / lbl_candidates_counter:
+   Строка 1632: self.lbl_top200_counter.setWordWrap(True)
+   Строка 1633: self.lbl_top200_counter.setMinimumHeight(50 if (V2_AVAILABLE and USE_NEW_UI) els
+   Строка 1691: self.lbl_candidates_counter.setWordWrap(True)
+   Строка 1692: self.lbl_candidates_counter.setMinimumHeight(60 if (V2_AVAILABLE and USE_NEW_UI)
+   Строка 2232: self.lbl_top200_counter.setText(top200_header)
+   Строка 2235: self.lbl_candidates_counter.setText(candidates_header)
+   Строка 2305: self.lbl_top200_counter.setText(
+   Строка 2531: self.lbl_candidates_counter.setText(f"Обновление: {time_str}")
+
+[7] ИСПОЛЬЗОВАНИЕ get_header_manager:
+   Строка 324: get_header_manager, TABLE1_HEADERS, TABLE2_HEADERS,
+   Строка 2178: from ui.table_headers_v2 import get_header_manager
+   Строка 2189: header_mgr = get_header_manager()
+
+================================================================================
+АНАЛИЗ:
+================================================================================
+Код интегрирован. Проверьте:
+   1. Нет ли исключений при импорте V2 модулей
+   2. Работает ли tick_status_line вообще

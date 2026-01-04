@@ -1,0 +1,25 @@
+# secrets
+.env
+*.env
+
+# python junk
+__pycache__/
+*.pyc
+
+# venv
+.venv/
+venv/
+
+# logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# archives
+*.zip
+
+# build artifacts
+dist/
+build/

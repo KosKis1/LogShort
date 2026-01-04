@@ -1,0 +1,41 @@
+======================================================================
+ДИАГНОСТИКА STEP 2 - 2026-01-02 23:32:27
+======================================================================
+
+[1] ПРОВЕРКА ФАЙЛОВ V2:
+   ✓ ЕСТЬ - core/config_v2.py (Конфигурация V2)
+   ✓ ЕСТЬ - core/engine_v2.py (Движок V2)
+   ✓ ЕСТЬ - strategies/short_after_pump_v2.py (Стратегии V2)
+   ✓ ЕСТЬ - ui/table_headers_v2.py (UI Headers V2)
+
+[2] ПРОВЕРКА БЭКАПА:
+   ✓ Бэкап существует: auto-short_v095_with_trainer_bridge.py.pre_step2
+   Размер: 129,823 байт
+   Создан: 2026-01-02 23:23:14
+
+[3] ПРОВЕРКА ПАТЧА В ОСНОВНОМ ФАЙЛЕ:
+   ✓ НАЙДЕН - Флаг V2_AVAILABLE
+   ✓ НАЙДЕН - Импорт config_v2
+   ✓ НАЙДЕН - Импорт engine_v2
+   ✓ НАЙДЕН - Импорт table_headers_v2
+   ✓ НАЙДЕН - Метод прогресс-баров
+   ✓ НАЙДЕН - Флаг USE_NEW_UI
+
+[4] ТОЧКА ВСТАВКИ ИМПОРТОВ:
+   ✓ Найдена строка 'from core.params import P'
+   Строка #310: from core.params import P
+   Следующие 5 строк:
+      311: # === V2 IMPORTS (Step 2) ===
+      312: try:
+      313:     from core.config_v2 import (
+      314:         USE_NEW_UI, USE_NEW_FREQUENCIES, USE_NEW_SCORING, USE_NEW_ALGORITHMS,
+      315:         SCAN_LEVEL1_INTERVAL_SEC, SCAN_LEVEL2_INTERVAL_SEC, SCAN_LEVEL3_INTERVAL
+
+[5] НАСТРОЙКИ CONFIG_V2:
+   USE_NEW_UI = True                    # Новые таблицы и заголовки с прогресс-барами
+
+======================================================================
+ВЕРДИКТ:
+======================================================================
+✓ Патч Step 2 применён корректно
+   Если UI не изменился - проверьте USE_NEW_UI = True в config_v2.py

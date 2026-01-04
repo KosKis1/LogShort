@@ -1,0 +1,3110 @@
+# Bybit Futures SHORT Scanner — LIVE (TZ v10.1)
+# PySide6 + Matplotlib + Requests
+# Telegram: send after EVERY completed scan (manual + auto), even if no recommendations.
+#
+# ---------------------------------------------------------------------------
+# High-level architecture (for future modular refactor):
+#
+#   - BybitClient: thin wrapper around Bybit v5 public HTTP endpoints.
+#     (tickers, klines, optional extras)
+#
+#   - ScannerWorker (QThread): heavy network + math. Emits progress and the
+#     computed CoinRow map to the UI thread.
+#
+#   - MainWindow (Qt): presentation only. Receives computed rows, sorts them
+#     (Step-2: base short-ranking), and renders 2 pinned rows (BTC/ETH) + TOP-20.
+#
+#   - Trainer bridge: after a scan is completed, we write a snapshot JSON into
+#     the shared directory used by trainer_live.py. This keeps scanner and
+#     trainer decoupled (file-based IPC).
+#
+# NOTE: We intentionally keep this monolith as the "baseline working" version.
+# The next project steps will split it into core/* and ui/* with minimal diffs.
+# ---------------------------------------------------------------------------
+
+# Suppress connection pool warnings
+import warnings
+warnings.filterwarnings("ignore", message=".*Connection pool.*")
+import urllib3
+urllib3.disable_warnings()
+
+import os
+import sys
+import subprocess
+import time
+FIXED_BASE_DIR = r"C:\Pythone\Log_Short"
+import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+from core.engine import sort_symbols_base, select_focus_symbols
+from core.preselect import select_top_short_candidates
+# ===== PATCH: robust bridge snapshot writer (always rewrites file) =====
+def write_bridge_snapshot_atomic(rows: list):
+    """Always rewrite bridge_snapshot.json with new ts and ensure mtime changes.
+    Writes atomically: temp -> replace, then utime."""
+    try:
+        os.makedirs(BRIDGE_DIR, exist_ok=True)
+        payload = {"ts": int(time.time()), "items": rows}
+        tmp = BRIDGE_SNAPSHOT + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False, indent=2)
+        os.replace(tmp, BRIDGE_SNAPSHOT)
+        try:
+            os.utime(BRIDGE_SNAPSHOT, None)
+        except Exception:
+            pass
+    except Exception as e:
+        try:
+            with open(os.path.join(LOG_DIR, "scanner_errors.txt"), "a", encoding="utf-8") as f:
+                f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] write_bridge_snapshot_atomic error: {e}\n")
+        except Exception:
+            pass
+# ===== END PATCH =====
+import math
+import statistics
+import traceback
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple
+
+import requests
+
+# === Chart Window Integration ===
+try:
+    print("[DEBUG-IMPORT] Attempting to import ui.chart_window...")
+    from ui.chart_window import show_chart
+    HAS_CHART = True
+    print(f"[DEBUG-IMPORT] SUCCESS: ui.chart_window imported, show_chart={show_chart}")
+except ImportError as e:
+    HAS_CHART = False
+    print(f"[DEBUG-IMPORT] FAILED: chart_window import error: {e}")
+    import traceback
+    traceback.print_exc()
+except Exception as e:
+    HAS_CHART = False
+    print(f"[DEBUG-IMPORT] FAILED: unexpected error: {e}")
+    import traceback
+    traceback.print_exc()
+
+from PySide6.QtCore import Qt, QThread, Signal, QObject, QEvent, QTimer, QPoint
+from PySide6.QtGui import QColor, QBrush, QFont
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+    QPushButton, QLabel, QTableWidget, QTableWidgetItem,
+    QHeaderView, QAbstractItemView, QSplitter, QMessageBox,
+    QDialog
+)
+
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+import matplotlib.dates as mdates
+from matplotlib.ticker import FuncFormatter, AutoMinorLocator
+
+
+# ============================================================
+# LOGGING (WinError5-safe) + global exception safety
+# ============================================================
+
+def _first_writable_dir(candidates: List[str]) -> str:
+    for d in candidates:
+        if not d:
+            continue
+        try:
+            os.makedirs(d, exist_ok=True)
+            testfile = os.path.join(d, "__write_test__.tmp")
+            with open(testfile, "w", encoding="utf-8") as f:
+                f.write("ok")
+            os.remove(testfile)
+            return d
+        except Exception:
+            continue
+    return os.getcwd()
+
+def _build_logs_dir() -> str:
+    os.makedirs(FIXED_BASE_DIR, exist_ok=True)
+    return FIXED_BASE_DIR
+
+LOG_DIR = _build_logs_dir()
+ERR_FILE = os.path.join(LOG_DIR, "errors.txt")
+APP_FILE = os.path.join(LOG_DIR, "app.log")
+
+# ============================================================
+# BRIDGE -> Trainer Live (shared snapshot)
+# ============================================================
+def _build_trainer_bridge_dir() -> str:
+    os.makedirs(FIXED_BASE_DIR, exist_ok=True)
+    return FIXED_BASE_DIR
+
+BRIDGE_DIR = _build_trainer_bridge_dir()
+BRIDGE_SNAPSHOT = os.path.join(BRIDGE_DIR, "bridge_snapshot.json")
+# PATCH: force bridge snapshot to fixed LOG_DIR to match Trainer
+BRIDGE_DIR = LOG_DIR
+BRIDGE_SNAPSHOT = os.path.join(BRIDGE_DIR, "bridge_snapshot.json")
+
+
+def launch_trainer_live_window():
+    """Запускает Trainer Live отдельным процессом (второе окно) и передаёт путь к BRIDGE_SNAPSHOT."""
+    # patched: Trainer запускается лаунчером, здесь не запускаем
+    return
+    try:
+        here = os.path.dirname(os.path.abspath(__file__))
+        trainer_py = os.path.join(here, "trainer_live.py")
+        if not os.path.exists(trainer_py):
+            return
+        env = os.environ.copy()
+        env["BYBIT_TRAINER_BRIDGE_SNAPSHOT"] = BRIDGE_SNAPSHOT
+        env["BYBIT_TRAINER_BRIDGE_DIR"] = BRIDGE_DIR
+        # отдельная консоль на Windows (не обязательно)
+        flags = 0
+        try:
+            flags = subprocess.CREATE_NEW_CONSOLE  # type: ignore[attr-defined]
+        except Exception:
+            flags = 0
+        subprocess.Popen([sys.executable, trainer_py], env=env, creationflags=flags)
+    except Exception:
+        pass
+
+
+
+def ensure_logs():
+    try:
+        os.makedirs(LOG_DIR, exist_ok=True)
+    except Exception:
+        pass
+
+
+def _atomic_write_json(path: str, obj: dict):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(obj, f, ensure_ascii=False, indent=2)
+        f.flush()
+        try:
+            os.fsync(f.fileno())
+        except Exception:
+            pass
+    try:
+        os.replace(tmp, path)
+    except Exception:
+        # fallback
+        with open(path, "w", encoding="utf-8") as f2:
+            json.dump(obj, f2, ensure_ascii=False, indent=2)
+
+def write_bridge_snapshot(rows: Dict[str, "CoinRow"], top_n: int = 30):
+    """Экспортирует топ-кандидатов (из основного сканера) для Trainer Live.
+    Trainer читает BRIDGE_SNAPSHOT и использует готовые входы/TP/метрики.
+    
+    v2.0: Добавлены status, score, watch_type для фильтрации в Trainer!
+    """
+    try:
+        os.makedirs(BRIDGE_DIR, exist_ok=True)
+        all_rows = list(rows.values())
+        
+        # Вычисляем статус и скор для каждой монеты
+        scored_items = []
+        for r in all_rows:
+            if not getattr(r, 'valid', True):
+                continue
+            try:
+                status, signal = compute_status(r)
+                score = compute_candidate_score(r)
+                wtype = compute_watch_type(r)
+                scored_items.append((r, status, signal, score, wtype))
+            except Exception:
+                continue
+        
+        # Сортируем: сначала по статусу (ВХОД > Готовность > Интерес), потом по скору
+        status_priority = {"ВХОД": 0, "Готовность": 1, "Интерес": 2, "Наблюдение": 3, "": 4}
+        scored_items.sort(key=lambda x: (status_priority.get(x[1], 99), -x[3]))
+        
+        top = scored_items[:max(5, int(top_n))]
+        
+        payload = {
+            "ts": int(time.time()),
+            "bridge_version": "2.0",
+            "top_n": len(top),
+            "items": [
+                {
+                    "symbol": r.symbol,
+                    "status": status,
+                    "score": float(score),
+                    "watch_type": wtype,
+                    "signal": (signal or "")[:80],
+                    "rank": int(getattr(r, "top_rank", 0) or 0),
+                    "vol24h_m": int(getattr(r, "vol24_m", 0) or 0),
+                    "price_now": float(getattr(r, "price_now", 0.0) or 0.0),
+                    "high_24h": float(getattr(r, "high_24h", 0.0) or 0.0),
+                    "low_24h": float(getattr(r, "low_24h", 0.0) or 0.0),
+                    "change_24h_pct": float(getattr(r, "change_24h_pct", 0.0) or 0.0),
+                    "range_position": float(getattr(r, "range_position", 0.0) or 0.0),
+                    "entry": float(getattr(r, "entry_price", 0.0) or 0.0),
+                    "sl": float(getattr(r, "sl_price", 0.0) or 0.0),
+                    "tp1": float(getattr(r, "tp1", 0.0) or 0.0),
+                    "tp2": float(getattr(r, "tp2", 0.0) or 0.0),
+                    "rr": float(getattr(r, "rr", 0.0) or 0.0),
+                    "candidate": float(getattr(r, "candidate_pct", 0.0) or 0.0),
+                } for r, status, signal, score, wtype in top
+            ],
+        }
+        _atomic_write_json(BRIDGE_SNAPSHOT, payload)
+    except Exception as e:
+        log_error("write_bridge_snapshot", e)
+
+
+def log_info(msg: str):
+    """Write informational messages to logs/app.log (project folder)."""
+    ensure_logs()
+    try:
+        with open(APP_FILE, "a", encoding="utf-8") as f:
+            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}\n")
+    except Exception:
+        pass
+
+def log_error(context: str, exc: BaseException):
+    ensure_logs()
+    txt = "\n".join([
+        "=" * 110,
+        time.strftime("%Y-%m-%d %H:%M:%S"),
+        f"CONTEXT: {context}",
+        f"EXC: {repr(exc)}",
+        traceback.format_exc(),
+        ""
+    ])
+    try:
+        with open(ERR_FILE, "a", encoding="utf-8") as f:
+            f.write(txt + "\n")
+    except Exception:
+        print(txt)
+
+def install_global_excepthook():
+    def _hook(exctype, value, tb):
+        try:
+            ensure_logs()
+            out = "\n".join([
+                "=" * 110,
+                time.strftime("%Y-%m-%d %H:%M:%S"),
+                "UNCAUGHT EXCEPTION",
+                f"TYPE: {exctype}",
+                f"VALUE: {repr(value)}",
+                "TRACE:\n" + "".join(traceback.format_tb(tb)),
+                ""
+            ])
+            try:
+                with open(ERR_FILE, "a", encoding="utf-8") as f:
+                    f.write(out + "\n")
+            except Exception:
+                print(out)
+        except Exception:
+            pass
+
+        print("\n[UNCAUGHT EXCEPTION]", exctype, value)
+        traceback.print_tb(tb)
+
+    sys.excepthook = _hook
+
+
+# ============================================================
+# CONSTANTS (TZ v10.1)
+# ============================================================
+
+# NOTE: runtime sizing/timing is sourced from core.params (immutable dataclass)
+from core.params import P
+# === V2 IMPORTS (Step 2) ===
+try:
+    from core.config_v2 import (
+        USE_NEW_UI, USE_NEW_FREQUENCIES, USE_NEW_SCORING, USE_NEW_ALGORITHMS,
+        SCAN_LEVEL1_INTERVAL_SEC, SCAN_LEVEL2_INTERVAL_SEC, SCAN_LEVEL3_INTERVAL_SEC,
+        STATUS_THRESHOLD_WATCH, STATUS_THRESHOLD_INTEREST, STATUS_THRESHOLD_READY,
+    )
+    from core.engine_v2 import (
+        get_scan_state, update_scan_timers, should_run_level1, should_run_level2, should_run_level3,
+        mark_level_complete, mark_level_started, calculate_score_v2, ScanMetrics,
+    )
+    from strategies.short_after_pump_v2 import ShortAfterPumpV2, get_strategy as get_strategy_v2
+    from ui.table_headers_v2 import (
+        get_header_manager, TABLE1_HEADERS, TABLE2_HEADERS,
+        format_impulse, format_volume_spike, format_relative_weakness,
+        format_trend, format_exhaustion, format_z_score, format_quality_stars,
+        format_criteria_type, format_maturity, format_volume_dynamic,
+        get_status_color, get_criteria_color,
+    )
+    V2_AVAILABLE = True
+    print("[V2] Новые модули v2 загружены успешно")
+except ImportError as e:
+    V2_AVAILABLE = False
+    USE_NEW_UI = False
+    print(f"[V2] Модули v2 не найдены, используем старую версию: {e}")
+# === END V2 IMPORTS ===
+
+
+BYBIT_BASE = "https://api.bybit.com"
+PINNED = ["BTCUSDT", "ETHUSDT"]
+TOP_N = getattr(getattr(P,'TOP',None),'N', getattr(P,'TOP_N', 20))
+UNIVERSE_N = getattr(getattr(P,'UNIVERSE',None),'size', getattr(P,'UNIVERSE_N', 200))
+PAGE_SIZE = UNIVERSE_N
+FOCUS_SIZE = P.FOCUS.size
+# Refresh intervals (seconds)
+UNIVERSE_REFRESH_SEC = P.UNIVERSE.refresh_sec
+TOP_REFRESH_SEC = P.TOP.refresh_sec
+FOCUS_REFRESH_SEC = 10  # repurposed: Candidate table refresh every 10 sec
+
+ENTRY_OFFSET_PCT = 1.0     # Entry = Price_now*(1+1%)
+SL_BUFFER_PCT = 0.20       # SL = High_Y*(1+0.2%)
+CLUSTER_MERGE_PCT = 0.3    # for S/R clustering
+
+CANDIDATE_MIN = 65.0
+CAND_CONF_MIN = 60.0
+CAND_EXH_MIN  = 0.30
+
+EXH_HARD_MIN = 0.25
+CONF_HARD_MIN = 50.0
+AUTO_RECALC_MINUTES = max(1, int(round(UNIVERSE_REFRESH_SEC / 60)))
+FLASH_MS = 900
+COUNTDOWN_SECONDS = 10
+
+PERIODS = [
+    ("5 мин", "5m"),
+    ("10 мин", "10m"),
+    ("30 мин", "30m"),
+    ("1 час", "1h"),
+    ("3 часа", "3h"),
+    ("12 часов", "12h"),
+    ("24 часа", "24h"),
+    ("3 дня", "3d"),
+    ("7 дней", "7d"),
+]
+
+BYBIT_INTERVAL_MIN = {
+    "1m": 1,
+    "3m": 3,
+    "5m": 5,
+    "15m": 15,
+    "30m": 30,
+    "60m": 60,
+    "1h": 60,
+    "12h": 720,
+}
+
+GRAPH_FETCH_PLAN = {
+    "5m":  ("1m", 240),
+    "10m": ("1m", 360),
+    "30m": ("5m", 288),
+    "1h":  ("5m", 360),
+    "3h":  ("15m", 288),
+    "12h": ("15m", 576),
+    "24h": ("30m", 600),
+    "3d":  ("60m", 240),
+    "7d":  ("60m", 420),
+}
+
+IND_FETCH = {
+    "5m":  ("5m", 220),
+    "15m": ("15m", 220),
+}
+
+
+# ============================================================
+# DATA MODEL
+# ============================================================
+
+@dataclass
+class CoinRow:
+    symbol: str
+    top_rank: int = 0
+    vol24_m: int = 0
+    coin: str = ""
+
+    # === NEW: данные из tickers (без klines) ===
+    price_now: float = 0.0
+    high_24h: float = 0.0
+    low_24h: float = 0.0
+    change_24h_pct: float = 0.0  # price24hPcnt * 100
+    range_position: float = 0.0  # (last-low)/(high-low) * 100
+    dist_to_high_pct: float = 0.0  # (high-last)/high * 100
+    funding_rate: float = 0.0
+    turnover_24h: float = 0.0
+
+    # === NEW: статус и сигнал ===
+    status: str = ""  # Наблюдение / Интерес / Готовность / ВХОД
+    signal: str = ""  # Краткое описание сигнала
+
+    # === NEW: тип сценария наблюдения ===
+    watch_type: str = ""  # Рост/Кор | Памп/Кор | Пл/Пад
+
+    # === OLD: для кандидатов (расчёт по klines) ===
+    short_prob: float = 0.0
+    short_conf: float = 0.0
+    candidate_pct: float = 0.0
+
+    exhaustion: float = 0.0
+    volume_score: float = 0.0
+
+    entry_price: float = 0.0
+    sl_price: float = 0.0
+    tp1: float = 0.0
+    tp2: float = 0.0
+    tp3: float = 0.0
+    rr: float = 0.0
+    profit_pct: float = 0.0
+
+    dist_high_pct: float = 0.0
+    high_y: float = 0.0
+
+    trend_1h_ppm: float = 0.0
+    trend_3h_ppm: float = 0.0
+    trend_24h_ppm: float = 0.0
+
+    v12h: float = 0.0
+    v3h: float = 0.0
+    v1h: float = 0.0
+    v15m: float = 0.0
+    v5m: float = 0.0
+
+    r_5m_1h: float = 0.0
+    r_15m_3h: float = 0.0
+
+    btc_div_1h: float = 0.0
+    grade: str = "D"
+
+    confirm_down: bool = False
+    confirm_volume: bool = False
+
+    valid: bool = True
+    err: str = ""
+
+
+
+# === Функция определения типа сигнала (сценарий наблюдения) ===
+def compute_watch_type(r: "CoinRow") -> str:
+    """
+    Возвращает один из типов:
+      - "Рост/Кор"  : рост + ожидание коррекции (R→K)
+      - "Памп/Кор"  : резкий перегрев + ожидание коррекции (P→K)
+      - "Пл/Пад"    : плавное падение (P→P)
+    Основано только на tickers-полях (без klines), чтобы быть быстрым и стабильным.
+    """
+    try:
+        ch = float(getattr(r, "change_24h_pct", 0.0))
+        pos = float(getattr(r, "range_position", 0.0))
+        d2h = float(getattr(r, "dist_to_high_pct", 999.0))
+    except Exception:
+        return "Рост/Кор"
+
+    # Памп/Кор: сильный рост и цена в верхней зоне диапазона
+    if ch >= 12.0 and pos >= 88.0 and d2h <= 3.0:
+        return "Памп/Кор"
+
+    # Рост/Кор: рост и цена ближе к верхней части диапазона
+    if ch >= 4.0 and pos >= 72.0:
+        return "Рост/Кор"
+
+    # Пл/Пад: отрицательная динамика + нижняя зона диапазона
+    if ch <= -4.0 and pos <= 45.0:
+        return "Пл/Пад"
+
+    # fallback
+    if ch < 0:
+        return "Пл/Пад"
+    return "Рост/Кор"
+
+# === Функция расчёта статуса ===
+def compute_status(r: "CoinRow") -> Tuple[str, str]:
+    """
+    Вычисляет статус и сигнал для монеты (быстрая версия без свечей).
+    Используется для TOP200 таблицы.
+    Возвращает (status, signal)
+    """
+    pos = r.range_position
+    dist = r.dist_to_high_pct
+    chg = r.change_24h_pct
+    fund = r.funding_rate
+    
+    # ВХОД: Позиция% > 95% И До хая% < 3% И 24ч% > 20% И Фандинг > 0
+    if pos > 95 and dist < 3 and chg > 20 and fund > 0:
+        signal = f"Памп +{chg:.0f}%, у хая, фандинг +"
+        return "ВХОД", signal
+    
+    # Готовность: Позиция% > 90% И До хая% < 5% И 24ч% > 15%
+    if pos > 90 and dist < 5 and chg > 15:
+        signal = f"Памп +{chg:.0f}%, близко к хаю"
+        return "Готовность", signal
+    
+    # Интерес: Позиция% > 80% И 24ч% > 10%
+    if pos > 80 and chg > 10:
+        signal = f"Рост +{chg:.0f}%, в верхней зоне"
+        return "Интерес", signal
+    
+    # Наблюдение: Позиция% > 70% ИЛИ 24ч% > 8%
+    if pos > 70 or chg > 8:
+        if chg > 8:
+            signal = f"Рост +{chg:.0f}%"
+        else:
+            signal = f"Позиция {pos:.0f}%"
+        return "Наблюдение", signal
+    
+    return "", ""
+
+
+def compute_status_with_gates(
+    r: "CoinRow",
+    candles_5m: List[Dict],
+    btc_trend_1h: float = 0.0,
+    btc_change_24h: float = 0.0
+) -> Tuple[str, str, Optional["GatesResult"]]:
+    """
+    Вычисляет статус с использованием системы гейтов (полная версия).
+    Используется для таблицы кандидатов.
+    Возвращает (status, signal, gates_result)
+    """
+    try:
+        from core.gates import check_all_gates, GatesResult
+        from core.params_ml import get_params
+        
+        # Получаем предыдущий dist_to_high (для Gate 3)
+        prev_dist = r.dist_to_high_pct  # упрощение: используем текущий
+        
+        # Momentum 10m: изменение за 2 последние свечи 5m
+        momentum_10m = 0.0
+        if len(candles_5m) >= 2:
+            c1, c2 = candles_5m[-2], candles_5m[-1]
+            if c1["close"] > 0:
+                momentum_10m = ((c2["close"] - c1["close"]) / c1["close"]) * 100
+        
+        result = check_all_gates(
+            symbol=r.symbol,
+            candles_5m=candles_5m,
+            current_price=r.price_now,
+            change_24h=r.change_24h_pct,
+            range_position=r.range_position,
+            dist_to_high=r.dist_to_high_pct,
+            funding_rate=r.funding_rate,
+            low_24h=r.low_24h,
+            btc_trend_1h=btc_trend_1h,
+            btc_change_24h=btc_change_24h,
+            momentum_10m=momentum_10m,
+            prev_dist_to_high=prev_dist,
+        )
+        
+        return result.status, result.signal_text, result
+        
+    except Exception as e:
+        # Fallback на простую версию
+        status, signal = compute_status(r)
+        return status, signal, None
+
+
+def compute_candidate_score(r: "CoinRow") -> float:
+    """
+    Вычисляет скор кандидата для отбора TOP-5 на шорт.
+    Чем выше скор - тем ближе монета к падению.
+    
+    Факторы (веса):
+    - Позиция в диапазоне дня (40%) - чем выше, тем лучше
+    - Рост за 24ч (30%) - чем больше памп, тем вероятнее откат
+    - Близость к хаю (20%) - чем ближе, тем лучше
+    - Положительный фандинг (10%) - толпа в лонгах = перегрев
+    """
+    score = 0.0
+    
+    # Позиция % (0-100) -> 0-40 баллов
+    score += min(40.0, r.range_position * 0.4)
+    
+    # Рост 24ч (0-50%+) -> 0-30 баллов
+    chg = min(50.0, max(0.0, r.change_24h_pct))
+    score += chg * 0.6  # 50% роста = 30 баллов
+    
+    # Близость к хаю: чем меньше dist_to_high, тем лучше (0-20 баллов)
+    # dist=0% -> 20 баллов, dist=10% -> 0 баллов
+    dist_score = max(0.0, 20.0 - r.dist_to_high_pct * 2.0)
+    score += dist_score
+    
+    # Фандинг положительный -> +10 баллов
+    if r.funding_rate > 0:
+        score += min(10.0, r.funding_rate * 1000)  # 0.01% = 10 баллов
+    
+    return score
+
+
+# ============================================================
+# TELEGRAM
+# ============================================================
+
+def tg_send_message(token: str, chat_id: int, text: str, thread_id: Optional[int] = None):
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    payload = {
+        "chat_id": chat_id,
+        "text": text,
+        "parse_mode": "HTML",
+        "disable_web_page_preview": True,
+    }
+    if thread_id is not None:
+        payload["message_thread_id"] = thread_id
+
+    r = requests.post(url, json=payload, timeout=12)
+    r.raise_for_status()
+    data = r.json()
+    if not data.get("ok", False):
+        raise RuntimeError(f"Telegram error: {data}")
+
+
+# ============================================================
+# BYBIT API v5
+# ============================================================
+
+class BybitClient:
+    def __init__(self, api_key: str = "", api_secret: str = ""):
+        self.api_key = api_key
+        self.api_secret = api_secret
+        self.s = requests.Session()
+        self.s.headers.update({"User-Agent": "ShortScanner/Live TZv10.1"})
+        
+        # Fix connection pool warnings
+        from requests.adapters import HTTPAdapter
+        from urllib3.util.retry import Retry
+        retry = Retry(total=2, backoff_factor=0.3, status_forcelist=[500, 502, 503, 504])
+        adapter = HTTPAdapter(pool_connections=20, pool_maxsize=20, max_retries=retry)
+        self.s.mount('https://', adapter)
+        self.s.mount('http://', adapter)
+
+        # --- SPEED: small in-memory TTL caches (process-local) ---
+        # Safe: read-only market data, avoids repeated identical requests.
+        # Keys: (symbol, interval_min, limit) -> (exp_ts, klines_list)
+        self._kline_cache = {}
+        # Key: "top200" -> (exp_ts, tickers_list)
+        self._tickers_cache = None
+
+    def _get(self, path: str, params: Dict) -> Dict:
+        url = BYBIT_BASE + path
+        r = self.s.get(url, params=params, timeout=12)
+        r.raise_for_status()
+        data = r.json()
+        rc = data.get("retCode", 0) if isinstance(data, dict) else 0
+        if rc not in (0, "0", None):
+            raise RuntimeError(f"Bybit retCode={rc} retMsg={data.get('retMsg')}")
+        return data
+
+    def get_top200_turnover(self, top_n: int = 200, *, ttl_sec: int = 600) -> List[Dict]:
+        """Return TOP-N USDT linear tickers sorted by turnover24h (desc).
+
+        NOTE:
+        - Despite historical name, this is the UNIVERSE fetcher.
+        - Use ttl_sec=600 (10 min) for Universe refresh.
+        """
+        top_n = int(top_n) if int(top_n) > 0 else 200
+        cache_key = f"top_tickers_{top_n}"
+        try:
+            if self._tickers_cache is not None:
+                exp_ts, key, cached = self._tickers_cache
+                if key == cache_key and exp_ts > time.time() and isinstance(cached, list) and cached:
+                    return cached
+        except Exception:
+            pass
+
+        data = self._get("/v5/market/tickers", {"category": "linear"})
+        lst = data.get("result", {}).get("list", []) or []
+        usdt = [x for x in lst if str(x.get("symbol", "")).endswith("USDT")]
+
+        def f(v):
+            try:
+                return float(v)
+            except Exception:
+                return 0.0
+
+        usdt.sort(key=lambda x: f(x.get("turnover24h", 0.0)), reverse=True)
+        out = usdt[:top_n]
+        try:
+            self._tickers_cache = (time.time() + max(1, int(ttl_sec)), cache_key, out)
+        except Exception:
+            pass
+        return out
+
+    def get_kline(self, symbol: str, interval_min: int, limit: int, *, ttl_sec: int | None = None) -> List[Dict]:
+        # SPEED: TTL cache for klines to avoid refetching same window during fast UI actions
+        # Default TTL depends on timeframe (conservative).
+        if ttl_sec is None:
+            if interval_min <= 5:
+                ttl_sec = 20
+            elif interval_min <= 15:
+                ttl_sec = 30
+            elif interval_min <= 60:
+                ttl_sec = 60
+            else:
+                ttl_sec = 120
+        key = (str(symbol).upper(), int(interval_min), int(limit))
+        try:
+            item = self._kline_cache.get(key)
+            if item:
+                exp_ts, cached = item
+                if exp_ts > time.time() and isinstance(cached, list) and cached:
+                    return cached
+        except Exception:
+            pass
+
+        data = self._get("/v5/market/kline", {
+            "category": "linear",
+            "symbol": symbol,
+            "interval": str(int(interval_min)),
+            "limit": str(int(limit)),
+        })
+        rows = data.get("result", {}).get("list", []) or []
+        out = []
+        for r in reversed(rows):  # oldest -> newest
+            try:
+                out.append({
+                    "ts": int(r[0]),
+                    "open": float(r[1]),
+                    "high": float(r[2]),
+                    "low": float(r[3]),
+                    "close": float(r[4]),
+                    "volume": float(r[5]),
+                    "turnover": float(r[6]),
+                })
+            except Exception:
+                continue
+        try:
+            self._kline_cache[key] = (time.time() + max(1, int(ttl_sec)), out)
+        except Exception:
+            pass
+        return out
+
+
+# ============================================================
+# MATH HELPERS (TZ v10.1 formulas)
+# ============================================================
+
+def clamp(x: float, lo: float, hi: float) -> float:
+    return max(lo, min(hi, x))
+
+def safe_div(a: float, b: float) -> float:
+    return a / b if b else 0.0
+
+def pct(a: float, b: float) -> float:
+    return safe_div((a - b), b) * 100.0 if b else 0.0
+
+def fmt_price(x: float) -> str:
+    if not x or x <= 0 or math.isnan(x) or math.isinf(x):
+        return "N/A"
+    if x >= 1000:
+        return f"{x:.2f}"
+    if x >= 1:
+        return f"{x:.4f}"
+    return f"{x:.6f}"
+
+def local_high(kl: List[Dict], lookback: int) -> float:
+    if not kl:
+        return 0.0
+    tail = kl[-lookback:] if len(kl) >= lookback else kl
+    return max(x["high"] for x in tail) if tail else 0.0
+
+def close_hours_ago(kl_1h: List[Dict], hours: int) -> Optional[float]:
+    if not kl_1h:
+        return None
+    idx = len(kl_1h) - 1 - hours
+    if idx < 0:
+        idx = 0
+    return float(kl_1h[idx]["close"])
+
+def trend_ppm(close_then: float, close_now: float, minutes: int) -> float:
+    if minutes <= 0 or close_then <= 0 or close_now <= 0:
+        return 0.0
+    return pct(close_now, close_then) / float(minutes)
+
+def down(x: float) -> float:
+    return clamp((-x) / 0.02, 0.0, 1.0)
+
+def up(x: float) -> float:
+    return clamp((x) / 0.02, 0.0, 1.0)
+
+def log1p_norm(x: float, denom: float) -> float:
+    x = max(x, 0.0)
+    return clamp(math.log1p(x) / math.log1p(denom), 0.0, 1.0)
+
+def structure_score_from_candles(kl: List[Dict], n: int = 6) -> float:
+    if not kl or len(kl) < 3:
+        return 0.0
+    last = kl[-n:] if len(kl) >= n else kl
+    closes = [x["close"] for x in last]
+    highs = [x["high"] for x in last]
+    dec_close = sum(1 for i in range(1, len(closes)) if closes[i] < closes[i - 1])
+    dec_high  = sum(1 for i in range(1, len(highs))  if highs[i]  < highs[i - 1])
+    return clamp((dec_close + dec_high) / 10.0, 0.0, 1.0)
+
+def trade_plan(price_now: float, high_y: float) -> Tuple[float, float, float, float, float, float, float]:
+    entry = price_now * (1.0 + ENTRY_OFFSET_PCT / 100.0)
+    if high_y > 0:
+        sl = high_y * (1.0 + SL_BUFFER_PCT / 100.0)
+    else:
+        sl = entry * (1.0 + 0.015)
+
+    risk = max(sl - entry, entry * 0.002)
+    tp1 = max(entry - 0.5 * risk, 0.0)
+    tp2 = max(entry - 1.0 * risk, 0.0)
+    tp3 = max(entry - 1.5 * risk, 0.0)
+    rr = safe_div((entry - tp2), (sl - entry)) if (sl - entry) > 0 else 0.0
+    profit_pct = safe_div((entry - tp2), entry) * 100.0 if entry > 0 else 0.0
+    return entry, sl, tp1, tp2, tp3, rr, profit_pct
+
+def compute_volume_score(ratio_5m_1h: float, ratio_15m_3h: float) -> float:
+    return clamp(
+        0.6 * log1p_norm(ratio_5m_1h, 3.0) +
+        0.4 * log1p_norm(ratio_15m_3h, 3.0),
+        0.0, 1.0
+    )
+
+def compute_exhaustion(trend_1h: float, trend_3h: float, trend_24h: float) -> float:
+    pump = up(trend_24h)
+    rev = down(trend_1h) * down(trend_3h)
+    return clamp(pump * rev, 0.0, 1.0)
+
+def compute_short_prob(dist_high_pct: float, volume_score: float, btc_div_1h: float, exhaustion: float) -> float:
+    proximity = clamp(1.0 - dist_high_pct / 12.0, 0.0, 1.0)
+    btc_weak = clamp((-btc_div_1h) / 0.015, 0.0, 1.0)
+    return 100.0 * clamp(
+        0.35 * exhaustion +
+        0.25 * proximity +
+        0.20 * volume_score +
+        0.20 * btc_weak,
+        0.0, 1.0
+    )
+
+def compute_conf_down_strength(trend_1h: float, trend_3h: float, volume_score: float, structure_score: float) -> float:
+    price_drop = clamp(0.6 * down(trend_1h) + 0.4 * down(trend_3h), 0.0, 1.0)
+    return 100.0 * clamp(
+        0.45 * price_drop +
+        0.35 * structure_score +
+        0.20 * volume_score,
+        0.0, 1.0
+    )
+
+def compute_candidate_pct(short_prob: float, conf: float, rr: float, btc_div_1h: float, exhaustion: float) -> float:
+    rr_score = 100.0 * clamp(rr / 2.5, 0.0, 1.0)
+    btc_score = 100.0 * clamp((-btc_div_1h) / 0.015, 0.0, 1.0)
+
+    base = clamp(
+        0.45 * conf +
+        0.35 * short_prob +
+        0.15 * rr_score +
+        0.05 * btc_score,
+        0.0, 100.0
+    )
+
+    if exhaustion < EXH_HARD_MIN:
+        base = min(base, 40.0)
+    if conf < CONF_HARD_MIN:
+        base = min(base, 55.0)
+
+    return base
+
+def grade_from(prob: float, conf: float) -> str:
+    if prob >= 75 and conf >= 75:
+        return "A"
+    if prob >= 65 and conf >= 65:
+        return "B"
+    if prob >= 55 and conf >= 55:
+        return "C"
+    return "D"
+
+def confirm_down_logic(trend_1h: float, trend_3h: float, structure_score: float) -> bool:
+    return (trend_1h < 0.0) and (trend_3h <= 0.0 or structure_score >= 0.35)
+
+def confirm_volume_logic(volume_score: float) -> bool:
+    return volume_score >= 0.25
+
+
+# ============================================================
+# SUPPORT / RESISTANCE
+# ============================================================
+
+def local_extrema_levels(kl: List[Dict]) -> Tuple[List[float], List[float]]:
+    lows, highs = [], []
+    if not kl or len(kl) < 5:
+        return lows, highs
+    for i in range(1, len(kl) - 1):
+        a, b, c = kl[i - 1], kl[i], kl[i + 1]
+        if b["low"] < a["low"] and b["low"] < c["low"]:
+            lows.append(float(b["low"]))
+        if b["high"] > a["high"] and b["high"] > c["high"]:
+            highs.append(float(b["high"]))
+    return lows, highs
+
+def cluster_levels(levels: List[float], merge_pct: float) -> List[float]:
+    if not levels:
+        return []
+    levels = sorted(levels)
+    clusters: List[List[float]] = [[levels[0]]]
+    for x in levels[1:]:
+        last_med = statistics.median(clusters[-1])
+        rel = abs(x - last_med) / last_med * 100.0 if last_med else 999.0
+        if rel <= merge_pct:
+            clusters[-1].append(x)
+        else:
+            clusters.append([x])
+    return sorted(float(statistics.median(cl)) for cl in clusters)
+
+def compute_support_resistance(kl: List[Dict], price_now: float) -> Tuple[List[float], List[float]]:
+    lows, highs = local_extrema_levels(kl)
+
+    if len(lows) < 3 and kl:
+        lows += [min(x["low"] for x in kl)]
+    if len(highs) < 3 and kl:
+        highs += [max(x["high"] for x in kl)]
+
+    sup_levels = cluster_levels(lows, CLUSTER_MERGE_PCT)
+    res_levels = cluster_levels(highs, CLUSTER_MERGE_PCT)
+
+    supports = [x for x in sup_levels if x < price_now]
+    resistances = [x for x in res_levels if x > price_now]
+
+    supports = sorted(supports, reverse=True)[:3]
+    resistances = sorted(resistances)[:3]
+    return supports, resistances
+
+
+# ============================================================
+# SOUND
+# ============================================================
+
+def beep_triple():
+    """Play 3 short beeps for alert (Windows only, silent fallback)."""
+    try:
+        import winsound
+        for _ in range(3):
+            winsound.Beep(1000, 150)
+            time.sleep(0.05)
+    except Exception:
+        pass  # Non-Windows or sound unavailable
+
+def _perf_log(stage: str, ms: int, extra: str = ""):
+    """Log performance metric to logs/perf.log"""
+    try:
+        perf_file = os.path.join(LOG_DIR, "perf.log")
+        with open(perf_file, "a", encoding="utf-8") as f:
+            ts = time.strftime("%Y-%m-%d %H:%M:%S")
+            f.write(f"[{ts}] PERF|{stage}|ms={ms}|{extra}\n")
+    except Exception:
+        pass
+
+
+# ===== 6B2 MATH REBIND (core.short_math) =====
+try:
+    from core import short_math as _sm
+    from core import preselect as _ps  # type: ignore  # type: ignore
+    clamp = _sm.clamp
+    safe_div = _sm.safe_div
+    pct = _sm.pct
+    fmt_price = _sm.fmt_price
+    local_high = _sm.local_high
+    close_hours_ago = _sm.close_hours_ago
+    trend_ppm = _sm.trend_ppm
+    down = _sm.down
+    up = _sm.up
+    log1p_norm = _sm.log1p_norm
+    structure_score_from_candles = _sm.structure_score_from_candles
+    trade_plan = _sm.trade_plan
+    compute_volume_score = _sm.compute_volume_score
+    compute_exhaustion = _sm.compute_exhaustion
+    compute_short_prob = _sm.compute_short_prob
+    compute_conf_down_strength = _sm.compute_conf_down_strength
+    compute_candidate_pct = _sm.compute_candidate_pct
+    grade_from = _sm.grade_from
+    confirm_down_logic = _sm.confirm_down_logic
+    confirm_volume_logic = _sm.confirm_volume_logic
+    local_extrema_levels = _sm.local_extrema_levels
+    cluster_levels = _sm.cluster_levels
+    compute_support_resistance = _sm.compute_support_resistance
+except Exception as _e:
+    # If something goes wrong, keep legacy inline functions (baseline behavior).
+    pass
+# ===========================================
+# ===== 6B3-A IMPORT ML SHADOW =====
+try:
+    from core import ml_shadow as _mls  # type: ignore
+except Exception:
+    _mls = None
+# ==================================
+
+# ============================================================
+
+class ScannerWorker(QThread):
+    progress = Signal(str, int, int)
+    batch_ready = Signal(dict)
+    done_all = Signal(dict)
+    failed = Signal(str)
+
+    def __init__(self, client: "BybitClient"):
+        super().__init__()
+        self.client = client
+        self._stop = False
+
+    def stop(self):
+        self._stop = True
+
+    def run(self):
+        try:
+            # PERF: cycle speedometer (Universe + Candidates)
+            _t_cycle0 = time.perf_counter()
+
+            total = int(getattr(getattr(P, "UNIVERSE", None), "size", 200) or 200)
+            done = 0
+            self.progress.emit("UNIVERSE: market/tickers (TOP200)…", done, total)
+
+            # 1) Universe tickers (1 request)
+            _t0 = time.perf_counter()
+            tickers = self.client.get_top200_turnover(200, ttl_sec=int(getattr(P.UNIVERSE, "refresh_sec", 600) or 600))
+            _t_tickers_ms = int((time.perf_counter() - _t0) * 1000)
+            if not tickers:
+                raise RuntimeError("Bybit вернул пустой список тикеров (UNIVERSE TOP200).")
+
+            # 2) Build base rows for ALL 200 from tickers only (NO klines)
+            rows: Dict[str, CoinRow] = {}
+            vol_map: Dict[str, Tuple[int, int]] = {}  # sym -> (rank, vol24_m)
+
+            def fnum(v) -> float:
+                try:
+                    return float(v)
+                except Exception:
+                    return 0.0
+
+            for i, t in enumerate(tickers[:total], start=1):
+                sym = str(t.get("symbol", "")).upper()
+                if not sym:
+                    continue
+                turnover = fnum(t.get("turnover24h", 0.0))
+                vol24_m = int(turnover / 1e6)
+                vol_map[sym] = (i, vol24_m)
+
+                r = CoinRow(symbol=sym, top_rank=i, vol24_m=vol24_m, coin=sym.replace("USDT", ""), valid=True)
+                
+                # === Заполняем данные из tickers (БЕЗ klines) ===
+                px = fnum(t.get("lastPrice", 0.0)) or fnum(t.get("markPrice", 0.0)) or fnum(t.get("indexPrice", 0.0))
+                r.price_now = px
+                
+                high_24h = fnum(t.get("highPrice24h", 0.0))
+                low_24h = fnum(t.get("lowPrice24h", 0.0))
+                r.high_24h = high_24h
+                r.low_24h = low_24h
+                
+                # change_24h_pct: price24hPcnt обычно как 0.0123 (1.23%)
+                change_raw = fnum(t.get("price24hPcnt", 0.0))
+                r.change_24h_pct = change_raw * 100.0  # конвертируем в проценты
+                
+                # range_position: (last - low) / (high - low) * 100
+                rng = high_24h - low_24h
+                if rng > 0 and px > 0:
+                    r.range_position = ((px - low_24h) / rng) * 100.0
+                else:
+                    r.range_position = 50.0  # default middle
+                
+                # dist_to_high_pct: (high - last) / high * 100
+                if high_24h > 0 and px > 0:
+                    r.dist_to_high_pct = ((high_24h - px) / high_24h) * 100.0
+                else:
+                    r.dist_to_high_pct = 0.0
+                
+                # funding_rate
+                r.funding_rate = fnum(t.get("fundingRate", 0.0))
+                r.turnover_24h = turnover
+                
+                rows[sym] = r
+
+            # 3) Candidate preselect from tickers (no klines)
+            cand_rows = select_top_short_candidates(tickers[:total], top_n=10)
+            cand_syms = []
+            for c in cand_rows:
+                s = str(c.get("symbol", "")).upper()
+                if s and s.endswith("USDT"):
+                    cand_syms.append(s)
+            # ensure unique and keep order
+            seen=set()
+            cand_syms=[s for s in cand_syms if not (s in seen or seen.add(s))]
+
+            # 4) Heavy compute ONLY for 10 candidates (klines 5m/15m). Parallel.
+            self.progress.emit("Кандидаты: расчёт 10 монет (klines 5m/15m)…", 0, max(1, len(cand_syms)))
+            btc_trend_1h = 0.0  # keep lightweight (no BTC klines in this step)
+
+            def _job(sym: str) -> Tuple[str, CoinRow]:
+                rv = vol_map.get(sym, (0, 0))
+                row = self._compute_symbol(sym, rv, btc_trend_1h)
+                return sym, row
+
+            if cand_syms:
+                max_workers = min(10, max(2, len(cand_syms)))
+                done_local = 0
+                with ThreadPoolExecutor(max_workers=max_workers) as ex:
+                    futs = [ex.submit(_job, s) for s in cand_syms]
+                    for fut in as_completed(futs):
+                        if self._stop:
+                            return
+                        try:
+                            sym, r = fut.result()
+                            rows[sym] = r  # overwrite base row with computed candidate row
+                        except Exception:
+                            # keep base row; mark error in logs via row.err is handled in _compute_symbol
+                            pass
+                        done_local += 1
+                        self.progress.emit("Кандидаты: расчёт 10 монет…", done_local, len(cand_syms))
+
+            # PERF line
+            total_ms = int((time.perf_counter() - _t_cycle0) * 1000)
+            try:
+                import logging
+                logging.info(f"PERF|universe|tickers_ms={_t_tickers_ms}|cands={len(cand_syms)}|total_ms={total_ms}")
+            except Exception:
+                pass
+
+            self.done_all.emit(rows)
+        except Exception as e:
+            self.failed.emit(str(e))
+
+    def _compute_symbol(self, symbol: str, rank_vol: Tuple[int, int], btc_trend_1h: float) -> CoinRow:
+        rank, vol_m = rank_vol
+        coin = symbol.replace("USDT", "")
+        row = CoinRow(symbol=symbol, top_rank=rank, vol24_m=vol_m, coin=coin, valid=True)
+        # PERF: per-symbol timer
+        _t_sym0 = time.perf_counter()
+        _t_kline = 0.0
+
+        try:
+            _t0 = time.perf_counter()
+            kl_5m  = self.client.get_kline(symbol, BYBIT_INTERVAL_MIN[IND_FETCH["5m"][0]],  IND_FETCH["5m"][1])
+            _t_kline += (time.perf_counter() - _t0)
+            _t0 = time.perf_counter()
+            kl_15m = self.client.get_kline(symbol, BYBIT_INTERVAL_MIN[IND_FETCH["15m"][0]], IND_FETCH["15m"][1])
+            kl_1h  = None  # speed mode: not fetched
+            kl_12h = None  # speed mode: not fetched
+            _t_kline += (time.perf_counter() - _t0)
+            _t0 = time.perf_counter()
+            _t_kline += (time.perf_counter() - _t0)
+            _t0 = time.perf_counter()
+            _t_kline += (time.perf_counter() - _t0)
+
+            if kl_5m:
+                price_now = float(kl_5m[-1]["close"])
+            elif kl_1h:
+                price_now = float(kl_1h[-1]["close"])
+            else:
+                raise RuntimeError("Нет свечей для расчёта price_now")
+
+            row.price_now = price_now
+
+            high_y = local_high(kl_5m, lookback=60) if kl_5m else local_high(kl_1h, lookback=30)
+            row.high_y = high_y if high_y > 0 else max(price_now * 1.01, price_now)
+            row.dist_high_pct = ((row.high_y - price_now) / row.high_y * 100.0) if row.high_y > 0 else 0.0
+            if row.dist_high_pct < 0:
+                row.dist_high_pct = 0.0
+
+            close_now = float(kl_1h[-1]["close"]) if kl_1h else price_now
+            c1  = close_hours_ago(kl_1h, 1)  if kl_1h else None
+            c3  = close_hours_ago(kl_1h, 3)  if kl_1h else None
+            c24 = close_hours_ago(kl_1h, 24) if kl_1h else None
+
+            row.trend_1h_ppm  = trend_ppm(c1 or price_now,  close_now, 60)
+            row.trend_3h_ppm  = trend_ppm(c3 or price_now,  close_now, 180)
+            row.trend_24h_ppm = trend_ppm(c24 or price_now, close_now, 1440)
+
+            def last_turn(kl: List[Dict]) -> float:
+                return float(kl[-1]["turnover"]) if kl else 0.0
+
+            row.v5m = last_turn(kl_5m)
+            row.v15m = last_turn(kl_15m)
+            row.v1h = last_turn(kl_1h)
+            row.v12h = last_turn(kl_12h)
+            row.v3h = sum(float(x["turnover"]) for x in kl_1h[-3:]) if kl_1h and len(kl_1h) >= 3 else sum(float(x["turnover"]) for x in (kl_1h or []))
+
+            row.r_5m_1h = safe_div((row.v5m * 12.0), row.v1h) if row.v1h > 0 else (1.0 if row.v5m > 0 else 0.0)
+            row.r_15m_3h = safe_div((row.v15m * 12.0), row.v3h) if row.v3h > 0 else (1.0 if row.v15m > 0 else 0.0)
+
+            row.btc_div_1h = row.trend_1h_ppm - btc_trend_1h
+
+            row.volume_score = compute_volume_score(row.r_5m_1h, row.r_15m_3h)
+            row.exhaustion = compute_exhaustion(row.trend_1h_ppm, row.trend_3h_ppm, row.trend_24h_ppm)
+
+            row.short_prob = compute_short_prob(row.dist_high_pct, row.volume_score, row.btc_div_1h, row.exhaustion)
+
+            struct = structure_score_from_candles(kl_5m or kl_15m or kl_1h, n=6)
+            row.short_conf = compute_conf_down_strength(row.trend_1h_ppm, row.trend_3h_ppm, row.volume_score, struct)
+
+            entry, sl, tp1, tp2, tp3, rr, profit_pct = trade_plan(price_now=price_now, high_y=row.high_y)
+            row.entry_price = entry
+            row.sl_price = sl
+            row.tp1, row.tp2, row.tp3 = tp1, tp2, tp3
+            row.rr = rr
+            row.profit_pct = profit_pct
+
+            row.candidate_pct = compute_candidate_pct(row.short_prob, row.short_conf, row.rr, row.btc_div_1h, row.exhaustion)
+
+            # ===== 6B3-A MIN SHADOW (safe, no влияния на UI/Live) =====
+            if _mls is not None:
+                try:
+                    import os
+                    _proj_root = os.path.dirname(os.path.abspath(__file__))
+                    try:
+                        btc_ret_15m = (btc_trend_1h or 0.0) * 15.0
+                    except Exception:
+                        btc_ret_15m = None
+
+                    ml_c, ml_conf, ml_s = _mls.shadow_score(
+                        symbol=symbol,
+                        kl_5m=kl_5m or [],
+                        kl_15m=kl_15m or [],
+                        price_now=price_now,
+                        vol24_m=vol_m,
+                        btc_ret_15m=btc_ret_15m,
+                        P=P,
+                        project_root=str(_proj_root),
+                    )
+                    row.ml_candidate = ml_c
+                    row.ml_conf = ml_conf
+                    row.ml_short = ml_s
+
+
+                    # ---- Step 3 telemetry: legacy vs shadow (best effort, no влияния) ----
+                    try:
+                        if getattr(P, "TELEMETRY_ENABLED", True):
+                            from core.telemetry import append_legacy_row
+                            import time as _t
+                            append_legacy_row(
+                                project_root=str(_proj_root),
+                                ts=int(_t.time()),
+                                symbol=symbol,
+                                vol24_m=int(vol_m),
+                                legacy_short=float(getattr(row, "short_prob", 0.0)),
+                                legacy_candidate=float(getattr(row, "candidate_pct", 0.0)),
+                                legacy_conf=float(getattr(row, "short_conf", 0.0)),
+                                ml_short=float(ml_s),
+                                ml_candidate=float(ml_c),
+                                ml_conf=float(ml_conf),
+                                schema_version=str(getattr(P, "TELEMETRY_SCHEMA_VERSION", "1")),
+                                path_csv=str(getattr(P, "TELEMETRY_PATH_CSV", "logs/legacy_vs_shadow.csv")),
+                            )
+                    except Exception:
+                        pass
+
+                except Exception as _e:
+                    try:
+                        import os
+                        _proj_root = os.path.dirname(os.path.abspath(__file__))
+                        _p = os.path.join(_proj_root, 'logs', 'ml_shadow_errors.log')
+                        os.makedirs(os.path.dirname(_p), exist_ok=True)
+                        with open(_p, 'a', encoding='utf-8') as _f:
+                            _f.write('ERR %s: %s: %s\n' % (symbol, type(_e).__name__, _e))
+                    except Exception:
+                        pass
+            # ============================================================
+
+            row.grade = grade_from(row.short_prob, row.short_conf)
+
+            row.confirm_down = confirm_down_logic(row.trend_1h_ppm, row.trend_3h_ppm, struct)
+            row.confirm_volume = confirm_volume_logic(row.volume_score)
+
+            # PERF: attach timings (ms)
+            try:
+                row._perf_kline_ms = int(_t_kline * 1000)
+                row._perf_total_ms = int((time.perf_counter() - _t_sym0) * 1000)
+            except Exception:
+                pass
+            return row
+
+        except Exception as e:
+            row.valid = False
+            row.err = str(e)
+            row.short_prob = 0.0
+            row.short_conf = 0.0
+            row.candidate_pct = 0.0
+            row.grade = "D"
+            return row
+
+
+# ============================================================
+# CHARTS (HH:MM only, frequent grid, S/R, TP lines)
+# ============================================================
+
+class ChartsWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.fig = Figure(figsize=(10, 5), dpi=100)
+        self.canvas = FigureCanvas(self.fig)
+        # Один совмещённый график с двумя осями Y
+        self.ax_price = self.fig.add_subplot(111)
+        self.ax_volume = self.ax_price.twinx()  # Вторая ось Y для объёма
+
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.addWidget(self.canvas)
+        self.fig.tight_layout(pad=1.2)
+
+    def _apply_time_axis(self):
+        major_locator = mdates.AutoDateLocator(minticks=6, maxticks=10)
+        formatter = mdates.DateFormatter("%H:%M")
+
+        self.ax_price.xaxis.set_major_locator(major_locator)
+        self.ax_price.xaxis.set_major_formatter(formatter)
+        self.ax_price.yaxis.set_minor_locator(AutoMinorLocator(2))
+        self.ax_price.grid(True, which="major", linewidth=0.5, alpha=0.6, color='#444')
+        self.ax_price.grid(True, which="minor", linewidth=0.25, alpha=0.3, color='#333')
+
+        for lab in self.ax_price.get_xticklabels():
+            lab.set_rotation(0)
+            lab.set_horizontalalignment("center")
+
+    def plot(
+        self,
+        title: str,
+        kl: List[Dict],
+        row: Optional[CoinRow] = None,
+        supports: Optional[List[float]] = None,
+        resistances: Optional[List[float]] = None,
+    ):
+        self.ax_price.clear()
+        self.ax_volume.clear()
+
+        if not kl:
+            self.ax_price.set_title(f"{title} — нет данных", color='white')
+            self.ax_price.set_facecolor('#1a1a2e')
+            self._apply_time_axis()
+            self.canvas.draw_idle()
+            return
+
+        import datetime as dt
+        xs = [dt.datetime.fromtimestamp(x["ts"] / 1000.0) for x in kl]
+        closes = [x["close"] for x in kl]
+        volumes = [x["turnover"] / 1e6 for x in kl]  # в миллионах
+        
+        # Определяем уровни объёма для раскраски (низкий/средний/высокий)
+        if volumes:
+            vol_sorted = sorted(volumes)
+            vol_low = vol_sorted[int(len(vol_sorted) * 0.33)] if len(vol_sorted) > 3 else 0
+            vol_high = vol_sorted[int(len(vol_sorted) * 0.67)] if len(vol_sorted) > 3 else max(volumes)
+        else:
+            vol_low, vol_high = 0, 1
+
+        # Фон графика
+        self.ax_price.set_facecolor('#1a1a2e')
+        self.fig.patch.set_facecolor('#0d0d1a')
+        
+        # === Объём (бары на заднем плане) ===
+        colors = []
+        for v in volumes:
+            if v < vol_low:
+                colors.append('#3a3a4a')  # светло-серый (низкий)
+            elif v < vol_high:
+                colors.append('#5a5a6a')  # средне-серый
+            else:
+                colors.append('#7a7a8a')  # тёмно-серый (высокий)
+        
+        # Рисуем бары объёма
+        bar_width = (xs[1] - xs[0]) * 0.8 if len(xs) > 1 else dt.timedelta(minutes=5)
+        self.ax_volume.bar(xs, volumes, width=bar_width, color=colors, alpha=0.5, zorder=1)
+        self.ax_volume.set_ylabel("Объём (M)", color='#888')
+        self.ax_volume.tick_params(axis='y', colors='#888')
+        self.ax_volume.set_ylim(0, max(volumes) * 1.5 if volumes else 1)
+        
+        # === Цена (линия на переднем плане) ===
+        self.ax_price.plot(xs, closes, linewidth=2, color='#1e90ff', zorder=5)  # тёмно-синий
+        self.ax_price.set_title(title, color='white', fontsize=11)
+        self.ax_price.set_ylabel("Цена", color='#1e90ff')
+        self.ax_price.tick_params(axis='y', colors='#1e90ff')
+        self.ax_price.tick_params(axis='x', colors='#aaa')
+        
+        # === Линии поддержки (тёмно-зелёный, пунктир) ===
+        if supports:
+            for lv in supports[:3]:  # максимум 3 уровня
+                self.ax_price.axhline(lv, color='#006400', linewidth=1.2, 
+                                      linestyle='--', alpha=0.8, zorder=3)
+        
+        # === Линии сопротивления (светло-бордовый, пунктир) ===
+        if resistances:
+            for lv in resistances[:3]:  # максимум 3 уровня
+                self.ax_price.axhline(lv, color='#8b0000', linewidth=1.2,
+                                      linestyle='--', alpha=0.8, zorder=3)
+        
+        # === TP уровни (если есть) ===
+        if row and row.tp1 > 0:
+            self.ax_price.axhline(row.tp1, color='#00bcd4', linewidth=1, 
+                                  linestyle=':', alpha=0.7, zorder=2)
+        if row and row.entry_price > 0:
+            self.ax_price.axhline(row.entry_price, color='#ffc107', linewidth=1.2,
+                                  linestyle='-', alpha=0.8, zorder=4, label='Вход')
+        if row and row.sl_price > 0:
+            self.ax_price.axhline(row.sl_price, color='#f44336', linewidth=1.2,
+                                  linestyle='-', alpha=0.8, zorder=4, label='SL')
+
+        self._apply_time_axis()
+        self.fig.tight_layout(pad=1.0)
+        self.canvas.draw_idle()
+
+
+# ============================================================
+# COUNTDOWN + ESC FILTER
+# ============================================================
+
+class CountdownDialog(QDialog):
+    def __init__(self, parent: QWidget):
+        super().__init__(parent)
+        self.setWindowTitle("Авто-пересчёт")
+        self.setModal(False)
+        self.setWindowFlag(Qt.WindowStaysOnTopHint, True)
+        self.setFixedSize(420, 140)
+
+        lay = QVBoxLayout(self)
+        self.lbl = QLabel("")
+        self.lbl.setAlignment(Qt.AlignCenter)
+        f = QFont()
+        f.setPointSize(12)
+        self.lbl.setFont(f)
+        lay.addWidget(self.lbl)
+
+        self.lbl2 = QLabel("Нажмите ESC чтобы отменить")
+        self.lbl2.setAlignment(Qt.AlignCenter)
+        lay.addWidget(self.lbl2)
+
+    def set_seconds(self, sec: int):
+        self.lbl.setText(f"Через {sec} сек будет пересчёт")
+
+class AppEscFilter(QObject):
+    def __init__(self, window: "MainWindow"):
+        super().__init__()
+        self.window = window
+
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.KeyPress and event.key() == Qt.Key_Escape:
+            try:
+                self.window.on_esc_pressed()
+            except Exception:
+                pass
+            event.accept()
+            return True
+        return super().eventFilter(obj, event)
+
+
+# ============================================================
+# MAIN WINDOW
+# ============================================================
+
+class MainWindow(QMainWindow):
+    def __init__(self, client: BybitClient, tg_token: str, tg_chat_id: Optional[int], tg_thread_id: Optional[int], tg_lev: int):
+        super().__init__()
+        print("[DEBUG-MAINWINDOW] __init__ started")
+        self.client = client
+
+        self.tg_token = tg_token
+        self.tg_chat_id = tg_chat_id
+        self.tg_thread_id = tg_thread_id
+        self.tg_lev = tg_lev
+
+        self.setWindowTitle("Bybit Futures SHORT Scanner — LIVE (TZ v10.1) | Full HD")
+        self.resize(1920, 1040)
+        self.setMinimumSize(1600, 900)
+
+        # ---------------- UI state ----------------
+        # Selected chart period (buttons on the top-right).
+        self.current_period = "3h"
+
+        # Step-2 (TZ): we show ONLY TOP-20 rows (no paging over the 200-universe).
+        # We keep prev/next buttons in the layout, but they are disabled.
+        self.current_page = 0
+
+        # Sorting:
+        # - "base" mode is the project's default ranking key:
+        #     Short% ↓, Candidate% ↓, Conf% ↓, Vol24h(M) ↓
+        # - User can click on a header to temporarily view another sort,
+        #   but on every refresh we revert back to the base key.
+        self.sort_mode = "base"     # "base" or "column"
+        self.sort_col = 3           # default column shown as primary (Short%) when in column-mode
+        self.sort_desc = True       # DESC
+
+        self.worker: Optional[ScannerWorker] = None
+        self.rows_by_symbol: Dict[str, CoinRow] = {}
+        self.sorted_symbols: List[str] = []
+
+        self._recommendations_ready = False
+        self._last_best_symbol_beeped: Optional[str] = None
+
+        self.auto_timer = QTimer(self)
+        self.auto_timer.setInterval(AUTO_RECALC_MINUTES * 60 * 1000)
+        self.auto_timer.timeout.connect(self.start_recalc_countdown)
+
+        self.countdown_timer: Optional[QTimer] = None
+        self.countdown_remaining = 0
+        self.countdown_dialog: Optional[CountdownDialog] = None
+        self.countdown_cancelled = False
+        self.scan_in_progress = False
+
+        print("[DEBUG-MAINWINDOW] Calling _build_ui...")
+        self._build_ui()
+        print("[DEBUG-MAINWINDOW] _build_ui completed")
+        
+        self._apply_theme()
+        self._init_status_timers()
+
+        # STEP 3: Focus5 refresh timer (lightweight; uses already computed rows only)
+        self.focus_timer = QTimer(self)
+        self.focus_timer.setInterval(int(FOCUS_REFRESH_SEC * 1000))
+        self.focus_timer.timeout.connect(self._on_focus_tick_safe)
+        self.focus_timer.start()
+        print(f"[DEBUG-MAINWINDOW] focus_timer started with interval {FOCUS_REFRESH_SEC}s")
+
+        self.auto_timer.start()
+        print(f"[DEBUG-MAINWINDOW] auto_timer started with interval {AUTO_RECALC_MINUTES} min")
+        
+        # Загружаем сохранённое состояние (если есть)
+        self._load_app_state()
+        print("[DEBUG-MAINWINDOW] __init__ completed")
+
+    def _build_ui(self):
+        print("[DEBUG-BUILD-UI] _build_ui started")
+        root = QWidget()
+        self.setCentralWidget(root)
+        main = QVBoxLayout(root)
+        main.setContentsMargins(8, 8, 8, 8)
+        main.setSpacing(6)
+        print("[DEBUG-BUILD-UI] main layout created")
+
+        topbar = QHBoxLayout()
+        self.lbl_status = QLabel("Готово")
+        self.lbl_progress = QLabel(f"UNIVERSE: 0/{getattr(P.UNIVERSE, 'N', getattr(P.UNIVERSE, 'size', 200))} | обновлено --:--:-- | след. анализ через --:--")
+        self.lbl_reco = QLabel("TOP: обновлены 0 | сортировка: Short% ↓, Candidate% ↓, Conf% ↓ | след. пересчёт через --:--")
+        self.lbl_status.setMinimumWidth(240)
+
+        self.btn_prev = QPushButton("Предыдущая")
+        self.btn_next = QPushButton("Следующая")
+        self.btn_refresh = QPushButton("Обновить")
+
+        self.btn_metrics = QPushButton("Показать метрики")
+        self.btn_metrics.setCheckable(True)
+        self.btn_metrics.setChecked(False)
+
+        self.btn_prev.clicked.connect(self.on_prev)
+        self.btn_next.clicked.connect(self.on_next)
+        self.btn_refresh.clicked.connect(self.on_refresh)
+        self.btn_metrics.toggled.connect(self.on_toggle_metrics)
+
+        # Кнопки навигации включены для пролистывания блоков монет
+        self.btn_prev.setEnabled(True)
+        self.btn_next.setEnabled(True)
+
+        topbar.addWidget(self.lbl_status)
+        topbar.addWidget(self.lbl_progress)
+        topbar.addWidget(self.lbl_reco)
+        topbar.addStretch(1)
+        topbar.addWidget(self.btn_prev)
+        topbar.addWidget(self.btn_next)
+        topbar.addWidget(self.btn_refresh)
+        topbar.addWidget(self.btn_metrics)
+
+        self.period_buttons: Dict[str, QPushButton] = {}
+        for title, key in PERIODS:
+            b = QPushButton(title)
+            b.setCheckable(True)
+            b.clicked.connect(lambda _=False, k=key: self.on_period(k))
+            self.period_buttons[key] = b
+            topbar.addWidget(b)
+
+        # Кнопка корректного выхода
+        self.btn_exit = QPushButton("⏻ Выход")
+        self.btn_exit.setStyleSheet("""
+            QPushButton { 
+                background-color: #8b0000; 
+                color: white; 
+                font-weight: bold; 
+                padding: 8px 20px; 
+                border-radius: 4px;
+                font-size: 13px;
+            }
+            QPushButton:hover {
+                background-color: #a00000;
+            }
+        """)
+        self.btn_exit.clicked.connect(self.on_exit_app)
+        topbar.addWidget(self.btn_exit)
+
+        main.addLayout(topbar)
+
+        splitter = QSplitter(Qt.Vertical)
+
+        # === Метка счётчика TOP200 (V2: с прогресс-барами) ===
+        self.lbl_top200_counter = QLabel("Пересчитано: 0 из 200 | След. пересчёт через --:--")
+        self.lbl_top200_counter.setStyleSheet("color: #00d4ff; font-size: 13px; padding: 4px; font-weight: bold;")
+        self.lbl_top200_counter.setWordWrap(True)
+        self.lbl_top200_counter.setMinimumHeight(50 if (V2_AVAILABLE and USE_NEW_UI) else 20)
+
+        self.tbl_main = QTableWidget()
+        self.tbl_main.setColumnCount(10)
+        self.tbl_main.setRowCount(2 + PAGE_SIZE)
+        self.tbl_main.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.tbl_main.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.tbl_main.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.tbl_main.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.tbl_main.setShowGrid(True)
+
+        # Колонки TOP200 (V2: новые колонки с импульсом, слабостью, зрелостью)
+        if V2_AVAILABLE and USE_NEW_UI:
+            headers = TABLE1_HEADERS  # Из table_headers_v2.py
+            self.tbl_main.setColumnCount(len(headers))
+        else:
+            headers = [
+                "Ранг", "Монета", "Позиция %", "До хая %", "24ч %",
+                "Цена", "Оборот", "Фандинг", "Макс 24ч", "Мин 24ч"
+            ]
+        self.tbl_main.setHorizontalHeaderLabels(headers)
+        # Убрали скрытие метрик - все колонки видимы
+
+        self.tbl_main.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.tbl_main.horizontalHeader().sectionClicked.connect(self.on_header_clicked)
+        print(f"[DEBUG-SIGNAL] tbl_main.horizontalHeader().sectionClicked connected to on_header_clicked")
+        self.tbl_main.itemSelectionChanged.connect(self.on_main_selection)
+        self.tbl_main.verticalHeader().setDefaultSectionSize(28)
+
+        # Visual: Full HD optimized dark theme
+        self.tbl_main.setStyleSheet("""
+        QTableWidget { 
+            background-color: #0a0a15; 
+            color: #fff; 
+            gridline-color: #2a2a3a;
+            font-size: 13px;
+        }
+        QHeaderView::section { 
+            background-color: #1a1a2e; 
+            color: #00d4ff; 
+            padding: 8px; 
+            border: none;
+            border-bottom: 2px solid #00d4ff;
+            font-weight: bold;
+        }
+        QTableWidget::item:selected { 
+            background-color: #2a2a4e; 
+            color: #fff; 
+        }
+        """)
+        self.tbl_main.cellDoubleClicked.connect(self._on_table_double_click)
+        print(f"[DEBUG-SIGNAL] tbl_main.cellDoubleClicked connected to _on_table_double_click")
+        print(f"[DEBUG-BUILD-UI] tbl_main created and styled")
+
+
+        # === Метка счётчика кандидатов (V2: с прогресс-барами) ===
+        self.lbl_candidates_counter = QLabel("Обновление: --:--:--")
+        self.lbl_candidates_counter.setStyleSheet("color: #ffd700; font-size: 13px; padding: 4px; font-weight: bold;")
+        self.lbl_candidates_counter.setWordWrap(True)
+        self.lbl_candidates_counter.setMinimumHeight(60 if (V2_AVAILABLE and USE_NEW_UI) else 20)
+        self._candidates_flash_timer = None
+
+        # ---------------- Candidates table (обновлённая) ----------------
+        self.tbl_focus = QTableWidget()
+        # Расширенные метрики: Статус и Сигнал здесь, слева важные
+        focus_headers = ["Монета", "Статус", "Тип сигнала", "Сигнал", "Скор", "Позиция %", "До хая %", "24ч %",
+            "Фандинг", "Цена", "Вход", "SL", "TP1", "R/R",
+            "Оборот", "В списке", "Осталось"
+        ]
+        self.tbl_focus.setColumnCount(len(focus_headers))
+        self.tbl_focus.setRowCount(15)  # Динамическая таблица
+        self.tbl_focus.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.tbl_focus.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.tbl_focus.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.tbl_focus.itemSelectionChanged.connect(self.on_focus_selection)
+        self.tbl_focus.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.tbl_focus.setShowGrid(True)
+        self.tbl_focus.setHorizontalHeaderLabels(focus_headers)
+        self.tbl_focus.cellDoubleClicked.connect(self._on_table_double_click)
+        print(f"[DEBUG-SIGNAL] tbl_focus.cellDoubleClicked connected to _on_table_double_click")
+        print(f"[DEBUG-BUILD-UI] tbl_focus created and styled")
+        self.tbl_focus.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.tbl_focus.verticalHeader().setDefaultSectionSize(26)
+
+        # Хранилище кандидатов: symbol -> {"added_at": timestamp, "row": CoinRow}
+        self._candidates_storage = {}
+
+        # Visual: Full HD optimized with status colors
+        self.tbl_focus.setStyleSheet("""
+        QTableWidget { 
+            background-color: #0a0a15; 
+            color: #fff; 
+            gridline-color: #2a2a3a;
+            font-size: 13px;
+        }
+        QHeaderView::section { 
+            background-color: #1a1a2e; 
+            color: #ffd700; 
+            padding: 8px; 
+            border: none;
+            border-bottom: 2px solid #ffd700;
+            font-weight: bold;
+        }
+        QTableWidget::item:selected { 
+            background-color: #2a2a4e; 
+            color: #fff; 
+        }
+        """)
+
+        self.tbl_main.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tbl_main.horizontalHeader().customContextMenuRequested.connect(self.on_header_right_click)
+
+        # Left panel: TOP200 + Candidates
+        left_panel = QWidget()
+        left_layout = QVBoxLayout(left_panel)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+        left_layout.setSpacing(4)
+        
+        # Метка TOP200
+        left_layout.addWidget(self.lbl_top200_counter)
+        left_layout.addWidget(self.tbl_main)
+        
+        # Метка кандидатов
+        left_layout.addWidget(self.lbl_candidates_counter)
+        left_layout.addWidget(self.tbl_focus)
+        
+        splitter.addWidget(left_panel)
+
+        self.tbl_rec = QTableWidget()
+        rec_headers = [
+            "Ранг", "Candidate %", "Объём (24ч)", "Монета", "Статус",
+            "Подтверждаю", "SHORT (рынок)", "Сумма $", "Продать (рынок)",
+            "Плечо", "Profit %", "TP1", "TP2", "TP3"
+        ]
+        self.tbl_rec.setColumnCount(len(rec_headers))
+        self.tbl_rec.setRowCount(3)
+        self.tbl_rec.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.tbl_rec.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.tbl_rec.setSelectionMode(QAbstractItemView.NoSelection)
+        self.tbl_rec.setShowGrid(True)
+        self.tbl_rec.setHorizontalHeaderLabels(rec_headers)
+        self.tbl_rec.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.tbl_rec.verticalHeader().setDefaultSectionSize(26)
+        splitter.addWidget(self.tbl_rec)
+
+        self.charts = ChartsWidget()
+        splitter.addWidget(self.charts)
+
+        splitter.setStretchFactor(0, 3)
+        splitter.setStretchFactor(1, 1)
+        splitter.setStretchFactor(2, 2)
+
+        main.addWidget(splitter)
+
+        self.on_period(self.current_period, init=True)
+        self.render_recommendations_wait()
+
+    def _apply_theme(self):
+        self.setStyleSheet("""
+        QWidget { 
+            background-color: #0f0f1a; 
+            color: #e6e6e6; 
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        QTableWidget { 
+            background-color: #0a0a15; 
+            gridline-color: #2a2a3a; 
+            border: 1px solid #2a2a3a;
+            border-radius: 4px;
+        }
+        QHeaderView::section { 
+            background-color: #1a1a2e; 
+            color: #00d4ff;
+            padding: 8px; 
+            border: none;
+            border-bottom: 2px solid #00d4ff;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        QPushButton { 
+            background-color: #1a1a2e; 
+            border: 1px solid #3a3a5a; 
+            padding: 8px 14px; 
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        QPushButton:checked { 
+            background-color: #2a2a4e; 
+            border-color: #00d4ff;
+        }
+        QPushButton:hover { 
+            background-color: #2a2a4e; 
+            border-color: #00d4ff;
+        }
+        QLabel { 
+            font-size: 13px; 
+        }
+        QTableWidget::item:selected { 
+            background: #2a2a4e; 
+            color: #ffffff; 
+        }
+        QSplitter::handle {
+            background-color: #2a2a3a;
+            height: 3px;
+        }
+        """)
+        f = QFont()
+        f.setPointSize(11)
+        self.tbl_main.setFont(f)
+        self.tbl_rec.setFont(f)
+
+    # ---------------- Help ----------------
+    def on_header_right_click(self, pos: QPoint):
+        col = self.tbl_main.horizontalHeader().logicalIndexAt(pos)
+        help_map = self.indicator_help_map()
+        if col in help_map:
+            title, text = help_map[col]
+            try:
+                QMessageBox.information(self, title, text)
+            except Exception:
+                pass
+
+    @staticmethod
+    def indicator_help_map() -> Dict[int, Tuple[str, str]]:
+        return {
+            3: ("Short % (Probability)",
+                "Вероятность SHORT-сценария (потенциал).\n"
+                "Высокая = памп был + цена близко к хай + выдыхание + объём + слабее BTC.\n"
+                "Важно: Short% сам по себе НЕ означает, что монета уже падает."),
+            4: ("Conf % (Down Strength)",
+                "Сила текущего падения.\n"
+                "Высокая = тренд 1h/3h отрицательный + структура слабая + объём.\n"
+                "Если Conf низкий — падение НЕ подтверждено."),
+            5: ("Candidate % (Deal Rank)",
+                "Главный рейтинг кандидата на сделку.\n"
+                "Сочетает Conf + Short + R/R + слабость к BTC.\n"
+                "Hard filters: Exhaustion<0.25 → Cand≤40; Conf<50 → Cand≤55."),
+            9: ("Dist-High%",
+                "Дистанция до локального максимума (High_Y).\n"
+                "Меньше = ближе к хай (лучше для SHORT при подтверждениях)."),
+            11: ("Trend 1h (%/min)", "Тренд за 1 час (% в минуту). Отрицательный = снижение."),
+            12: ("Trend 3h (%/min)", "Тренд за 3 часа (% в минуту). Нужен для подтверждения."),
+            13: ("Trend 24h (%/min)", "Тренд за 24 часа (% в минуту). Используется для PumpScore."),
+            19: ("5m/1h", "(turnover 5m * 12) / turnover 1h. >1 = ускорение объёма."),
+            20: ("15m/3h", "(turnover 15m * 12) / turnover 3h. >1 = ускорение объёма."),
+            21: ("BTC div 1h", "Trend_1h_coin − Trend_1h_BTC. Отрицат. = монета слабее BTC."),
+            22: ("Signal grade", "A/B/C/D по Prob/Conf (упрощённая оценка)."),
+        }
+
+    # ---------------- Auto recalc ----------------
+    def start_recalc_countdown(self):
+        if self.scan_in_progress:
+            self.auto_timer.start()
+            return
+
+        self.stop_countdown()
+        self.countdown_cancelled = False
+        self.countdown_remaining = COUNTDOWN_SECONDS
+
+        self.countdown_dialog = CountdownDialog(self)
+        self.countdown_dialog.set_seconds(self.countdown_remaining)
+        self.countdown_dialog.show()
+
+        self.countdown_timer = QTimer(self)
+        self.countdown_timer.setInterval(1000)
+        self.countdown_timer.timeout.connect(self.countdown_tick)
+        self.countdown_timer.start()
+
+    def countdown_tick(self):
+        if self.countdown_cancelled:
+            self.stop_countdown()
+            self.auto_timer.start()
+            return
+
+        if self.countdown_remaining <= 0:
+            self.stop_countdown()
+            self.safe_start_scan()
+            self.auto_timer.start()
+            return
+
+        if self.countdown_dialog:
+            self.countdown_dialog.set_seconds(self.countdown_remaining)
+        self.countdown_remaining -= 1
+
+    def stop_countdown(self):
+        try:
+            if self.countdown_timer:
+                self.countdown_timer.stop()
+        except Exception:
+            pass
+        self.countdown_timer = None
+
+        try:
+            if self.countdown_dialog:
+                self.countdown_dialog.close()
+        except Exception:
+            pass
+        self.countdown_dialog = None
+
+    def on_esc_pressed(self):
+        if self.countdown_dialog and self.countdown_timer:
+            self.countdown_cancelled = True
+            self.lbl_status.setText("Авто-пересчёт отменён (следующий через 10 минут)")
+            return
+
+    # ---------------- Buttons ----------------
+    def on_refresh(self):
+        # Manual refresh. We reset to the project's default (base) ranking key.
+        self.sort_mode = "base"
+        self.sort_col = 3      # Short% (used only in column-mode)
+        self.sort_desc = True
+        self.current_page = 0
+        self.safe_start_scan()
+
+    def on_exit_app(self):
+        """Корректный выход с сохранением состояния и очисткой lock-файла."""
+        try:
+            self.lbl_status.setText("Сохранение и выход...")
+            QApplication.processEvents()
+            
+            # 1) Останавливаем worker
+            self.stop_worker()
+            
+            # 2) Останавливаем таймеры
+            if self.auto_timer:
+                self.auto_timer.stop()
+            if self.countdown_timer:
+                self.countdown_timer.stop()
+            if hasattr(self, 'focus_timer') and self.focus_timer:
+                self.focus_timer.stop()
+            if hasattr(self, '_candidates_flash_timer') and self._candidates_flash_timer:
+                self._candidates_flash_timer.stop()
+            
+            # 3) Сохраняем состояние приложения
+            self._save_app_state()
+            
+            # 4) Удаляем lock-файл
+            self._release_lock()
+            
+            # 5) Закрываем окно и выходим
+            self.close()
+            QApplication.quit()
+            
+        except Exception as e:
+            log_error("MainWindow.on_exit_app()", e)
+            # Всё равно выходим
+            self._release_lock()
+            QApplication.quit()
+    
+    def _save_app_state(self):
+        """Сохраняет состояние приложения в JSON."""
+        try:
+            state = {
+                "ts": int(time.time()),
+                "current_page": self.current_page,
+                "current_period": self.current_period,
+                "sort_mode": self.sort_mode,
+                "sort_col": self.sort_col,
+                "sort_desc": self.sort_desc,
+                "candidates": list(getattr(self, '_candidates_storage', {}).keys()),
+                "selected_symbol": self.get_selected_symbol() or "",
+            }
+            
+            # Сохраняем данные кандидатов
+            candidates_data = {}
+            for sym, data in getattr(self, '_candidates_storage', {}).items():
+                candidates_data[sym] = {
+                    "added_at": data.get("added_at", 0),
+                    "score": data.get("score", 0),
+                }
+            state["candidates_data"] = candidates_data
+            
+            # Сохраняем в файл
+            state_file = os.path.join(LOG_DIR, "app_state.json")
+            with open(state_file, "w", encoding="utf-8") as f:
+                json.dump(state, f, indent=2, ensure_ascii=False)
+            
+            # Лог
+            log_info(f"EXIT: State saved to {state_file}")
+            
+        except Exception as e:
+            log_error("MainWindow._save_app_state()", e)
+    
+    def _load_app_state(self):
+        """Загружает состояние приложения из JSON (при старте)."""
+        try:
+            state_file = os.path.join(LOG_DIR, "app_state.json")
+            if not os.path.exists(state_file):
+                return
+            
+            with open(state_file, "r", encoding="utf-8") as f:
+                state = json.load(f)
+            
+            # Проверяем что состояние не слишком старое (< 1 часа)
+            age = time.time() - state.get("ts", 0)
+            if age > 3600:
+                log_info("EXIT: State too old, ignoring")
+                return
+            
+            self.current_page = state.get("current_page", 0)
+            self.current_period = state.get("current_period", "3h")
+            self.sort_mode = state.get("sort_mode", "base")
+            self.sort_col = state.get("sort_col", 3)
+            self.sort_desc = state.get("sort_desc", True)
+            
+            # Восстанавливаем кандидатов
+            candidates_data = state.get("candidates_data", {})
+            if candidates_data and hasattr(self, '_candidates_storage'):
+                for sym, data in candidates_data.items():
+                    self._candidates_storage[sym] = data
+            
+            log_info(f"EXIT: State loaded, page={self.current_page}, period={self.current_period}")
+            
+        except Exception as e:
+            log_error("MainWindow._load_app_state()", e)
+    
+    def _release_lock(self):
+        """Удаляет lock-файл при выходе."""
+        try:
+            lock_file = os.path.join(LOG_DIR, ".instance.lock")
+            if os.path.exists(lock_file):
+                os.remove(lock_file)
+                log_info("EXIT: Lock file removed")
+        except Exception as e:
+            log_error("MainWindow._release_lock()", e)
+    
+    def closeEvent(self, event):
+        """Перехватываем закрытие окна (крестик)."""
+        self.on_exit_app()
+        event.accept()
+
+    def on_prev(self):
+        if self.current_page > 0:
+            self.current_page -= 1
+            self.render_main_table()
+        self.render_focus_table()
+        self.render_focus_table()
+
+    def on_next(self):
+        max_page = max(0, math.ceil(len(self.sorted_symbols) / PAGE_SIZE) - 1)
+        if self.current_page < max_page:
+            self.current_page += 1
+            self.render_main_table()
+
+    def on_period(self, key: str, init: bool = False):
+        self.current_period = key
+        for k, b in self.period_buttons.items():
+            b.setChecked(k == key)
+        if not init:
+            sym = self.get_selected_symbol()
+            if sym:
+                self.update_charts(sym)
+
+    # ---------------- Scan start ----------------
+    def safe_start_scan(self):
+        try:
+            self.start_scan()
+        except Exception as e:
+            log_error("MainWindow.safe_start_scan()", e)
+            self.show_error("Ошибка старта", str(e))
+            self.lbl_status.setText(f"Ошибка старта (логи: {LOG_DIR})")
+
+    def start_scan(self):
+        self.stop_worker()
+
+        self._recommendations_ready = False
+        self.render_recommendations_wait()
+
+        self.set_status("Загрузка данных…", 0, TOP_N)
+        self._universe_done = 0
+        self._universe_total = 200
+        self._top_updated_n = 0
+        self._scan_t0 = time.time()
+        self._set_next_scan_in(AUTO_RECALC_MINUTES * 60)
+        self.scan_in_progress = True
+        self.worker = ScannerWorker(self.client)
+        self.worker.progress.connect(self.on_progress)
+        self.worker.batch_ready.connect(self.on_batch_ready)
+        self.worker.done_all.connect(self.on_done_all)
+        self.worker.failed.connect(self.on_failed)
+        self.worker.start()
+
+    def stop_worker(self):
+        if self.worker and self.worker.isRunning():
+            self.worker.stop()
+            self.worker.wait(2000)
+        self.worker = None
+        self.scan_in_progress = False
+
+
+    def _init_status_timers(self):
+        # Next scheduled scan moment (for countdown in status lines)
+        self._next_scan_at = None  # type: Optional[float]
+        self._last_universe_update = None  # type: Optional[float]
+        self._status_tick_timer = QTimer(self)
+        self._status_tick_timer.setInterval(1000)
+        self._status_tick_timer.timeout.connect(self._tick_status_lines)
+        self._status_tick_timer.start()
+
+    def _set_next_scan_in(self, seconds: int):
+        try:
+            self._next_scan_at = time.time() + max(0, int(seconds))
+        except Exception:
+            self._next_scan_at = None
+
+    def _fmt_mmss(self, sec: int) -> str:
+        sec = max(0, int(sec))
+        return f"{sec//60:02d}:{sec%60:02d}"
+
+    def _tick_status_lines(self):
+        # V2: Обновляем прогресс-бары если доступны
+        if V2_AVAILABLE and USE_NEW_UI:
+            try:
+                self._update_v2_progress_bars()
+            except Exception:
+                pass
+        
+        # Universe line
+        try:
+            processed = getattr(self, "_universe_done", 0)
+            total = getattr(self, "_universe_total", 200)
+            upd = getattr(self, "_last_universe_update", None)
+            upd_str = time.strftime("%H:%M:%S", time.localtime(upd)) if upd else "--:--:--"
+            left = int(self._next_scan_at - time.time()) if getattr(self, "_next_scan_at", None) else 0
+            left_str = self._fmt_mmss(left) if getattr(self, "_next_scan_at", None) else "--:--"
+            self.lbl_progress.setText(f"UNIVERSE: {processed}/{total} | обновлено {upd_str} | след. анализ через {left_str}")
+        except Exception:
+            pass
+
+        # Top line (fixed base sort key per TЗ)
+        try:
+            left = int(self._next_scan_at - time.time()) if getattr(self, "_next_scan_at", None) else 0
+            left_str = self._fmt_mmss(left) if getattr(self, "_next_scan_at", None) else "--:--"
+            updated = getattr(self, "_top_updated_n", 0)
+            self.lbl_reco.setText(
+                f"TOP: обновлены {updated} | сортировка: Short% ↓, Candidate% ↓, Conf% ↓ | след. пересчёт через {left_str}"
+            )
+        except Exception:
+            pass
+
+    def _flash_top_updated(self):
+        # brief highlight of Top line label to signal update
+        try:
+            old = self.lbl_reco.styleSheet()
+            self.lbl_reco.setStyleSheet(old + " ; background-color: rgba(255, 255, 255, 35);")
+            QTimer.singleShot(FLASH_MS, lambda: self.lbl_reco.setStyleSheet(old))
+        except Exception:
+            pass
+
+    def set_status(self, status: str, done: int, total: int):
+        # Keep status lines stable (no flicker). Progress values are reflected
+        # in the dedicated UNIVERSE/TOP lines updated by _tick_status_lines().
+        self.lbl_status.setText(status)
+        try:
+            self._universe_done = int(done)
+            self._universe_total = int(total)
+        except Exception:
+            pass
+
+    # ---------------- Worker callbacks ----------------
+    def on_progress(self, status: str, done: int, total: int):
+        self.set_status(status, done, total)
+
+    def on_failed(self, msg: str):
+        log_error("Worker.failed", RuntimeError(msg))
+        self.lbl_status.setText(f"Ошибка (логи: {LOG_DIR})")
+        self.scan_in_progress = False
+        self.show_error("Ошибка", msg)
+
+    def on_batch_ready(self, rows_map: dict):
+        self.rows_by_symbol = dict(rows_map)
+        symbols = [s for s in self.rows_by_symbol.keys() if s.endswith("USDT") and s not in PINNED]
+        symbols.sort(key=lambda s: (self.rows_by_symbol.get(s).top_rank or 999999))
+        # After every refresh we revert to the base short-ranking key.
+        self.sort_mode = "base"
+        self.sorted_symbols = self.sorted_by_current_sort(symbols)
+        # НЕ ограничиваем - все монеты
+        self.render_main_table()
+        if not self._recommendations_ready:
+            self.render_recommendations_wait()
+
+    def on_done_all(self, rows_map: dict):
+        self.rows_by_symbol = dict(rows_map)
+        self._recommendations_ready = True
+        self.scan_in_progress = False
+
+        # Mark Universe update timestamp for the status line.
+        try:
+            self._universe_done = 200
+            self._universe_total = 200
+            self._last_universe_update = time.time()
+        except Exception:
+            pass
+
+        symbols = [s for s in self.rows_by_symbol.keys() if s.endswith("USDT") and s not in PINNED]
+        symbols.sort(key=lambda s: (self.rows_by_symbol.get(s).top_rank or 999999))
+        # Сортировка по Позиция% (range_position) - все 200 монет
+        self.sort_mode = "base"
+        self.sorted_symbols = self.sorted_by_current_sort(symbols)
+        # НЕ ограничиваем PAGE_SIZE - пагинация работает
+
+        # Обновляем счётчик TOP200
+        next_refresh_min = int(UNIVERSE_REFRESH_SEC / 60)
+        max_pages = max(1, math.ceil(len(self.sorted_symbols) / PAGE_SIZE))
+        self.lbl_top200_counter.setText(
+            f"Пересчитано: {len(self.rows_by_symbol)} из 200 | "
+            f"Страница {self.current_page + 1}/{max_pages} | "
+            f"Сортировка: Позиция% ↓ | "
+            f"След. пересчёт через {next_refresh_min} мин"
+        )
+
+        # Update TOP status line counters (no blinking).
+        try:
+            self._top_updated_n = len(self.sorted_symbols)
+        except Exception:
+            pass
+        self.render_main_table()
+        
+        # Обновляем таблицу кандидатов после загрузки данных
+        self.render_focus_table()
+        
+        # === ВАЖНО: Записываем bridge_snapshot для Trainer Live ===
+        try:
+            write_bridge_snapshot(self.rows_by_symbol, top_n=30)
+        except Exception as e:
+            log_error("write_bridge_snapshot call", e)
+
+        self.render_recommendations_final()  # includes Telegram sending each time (TZ v10.1)
+
+    # ---------------- Sorting ----------------
+    def on_header_clicked(self, col: int):
+        print(f"[DEBUG-HEADER] ==========================================")
+        print(f"[DEBUG-HEADER] Header clicked TRIGGERED: col={col}")
+        print(f"[DEBUG-HEADER] Current sort_mode: {getattr(self, 'sort_mode', 'base')}")
+        print(f"[DEBUG-HEADER] Current sort_col: {getattr(self, 'sort_col', 2)}")
+        print(f"[DEBUG-HEADER] Current sort_desc: {getattr(self, 'sort_desc', True)}")
+        
+        # User explicitly requested a different sort order (temporary).
+        # Next auto refresh will revert back to the base key.
+        self.sort_mode = "column"
+        if self.sort_col == col:
+            self.sort_desc = not self.sort_desc
+            print(f"[DEBUG-HEADER] Same column, toggling desc: {self.sort_desc}")
+        else:
+            self.sort_col = col
+            self.sort_desc = True
+            print(f"[DEBUG-HEADER] New column, setting col={col}, desc=True")
+
+        print(f"[DEBUG-HEADER] sorted_symbols count before: {len(self.sorted_symbols)}")
+        self.sorted_symbols = self.sorted_by_current_sort(self.sorted_symbols)
+        self.sorted_symbols = self.sorted_symbols[:PAGE_SIZE]
+        print(f"[DEBUG-HEADER] sorted_symbols count after: {len(self.sorted_symbols)}")
+        self.current_page = 0
+        print(f"[DEBUG-HEADER] Calling render_main_table...")
+        self.render_main_table()
+        print(f"[DEBUG-HEADER] render_main_table COMPLETED")
+
+    def sorted_by_current_sort(self, symbols: List[str]) -> List[str]:
+        """Sort a symbol list for presentation.
+
+        There are two modes:
+        - sort_mode='base': project's default multi-key short ranking
+            Short% ↓, Candidate% ↓, Conf% ↓, Vol24h(M) ↓
+        - sort_mode='column': single-column sort driven by header clicks
+        """
+
+        col = self.sort_col
+        desc = self.sort_desc
+
+        def get_row(sym: str) -> CoinRow:
+            return self.rows_by_symbol.get(sym, CoinRow(sym, valid=False, coin=sym.replace("USDT", "")))
+
+        valid_syms = [s for s in symbols if get_row(s).valid]
+        invalid_syms = [s for s in symbols if not get_row(s).valid]
+
+        # --- Base mode: default short ranking (Step-2) ---
+        if getattr(self, "sort_mode", "base") == "base":
+            def base_key(sym: str):
+                r = get_row(sym)
+                # Сортировка по Позиция% (range_position) desc - главный критерий для шорта
+                return (
+                    float(r.range_position),  # чем выше позиция - тем лучше для шорта
+                    float(r.change_24h_pct),  # потом по росту за 24ч
+                    -float(r.dist_to_high_pct),  # потом по близости к хаю (меньше = лучше)
+                )
+
+            # Always descending in base mode.
+            valid_syms.sort(key=base_key, reverse=True)
+            return valid_syms + invalid_syms
+
+        # --- Column mode (header click) ---
+        # Порядок колонок: Ранг, Монета, Позиция%, До хая%, 24ч%, Цена, Оборот, Фандинг, Макс, Мин
+        if col == 1:  # Монета
+            valid_syms.sort(key=lambda s: get_row(s).coin, reverse=desc)
+            return valid_syms + invalid_syms
+
+        def num_key(sym: str) -> float:
+            r = get_row(sym)
+            if col == 0: return float(r.top_rank or 0)
+            if col == 2: return float(r.range_position)  # Позиция %
+            if col == 3: return float(r.dist_to_high_pct)  # До хая %
+            if col == 4: return float(r.change_24h_pct)  # 24ч %
+            if col == 5: return float(r.price_now)  # Цена
+            if col == 6: return float(r.vol24_m or 0)  # Оборот
+            if col == 7: return float(r.funding_rate)  # Фандинг
+            if col == 8: return float(r.high_24h)  # Макс 24ч
+            if col == 9: return float(r.low_24h)  # Мин 24ч
+            return 0.0
+
+        valid_syms.sort(key=num_key, reverse=desc)
+        return valid_syms + invalid_syms
+
+    # ---------------- Main table render ----------------
+    def render_main_table(self):
+        self.tbl_main.blockSignals(True)
+        try:
+            self.tbl_main.clearContents()
+
+            def row_or_stub(sym: str) -> CoinRow:
+                r = self.rows_by_symbol.get(sym)
+                return r if r else CoinRow(sym, valid=False, coin=sym.replace("USDT", ""))
+
+            pinned_rows = [row_or_stub(PINNED[0]), row_or_stub(PINNED[1])]
+
+            start = self.current_page * PAGE_SIZE
+            end = start + PAGE_SIZE
+            page_syms = self.sorted_symbols[start:end]
+            page_rows = [row_or_stub(s) for s in page_syms]
+
+            self.fill_main_row(0, pinned_rows[0], pinned=True)
+            self.fill_main_row(1, pinned_rows[1], pinned=True)
+
+            for i in range(PAGE_SIZE):
+                idx = 2 + i
+                if i < len(page_rows):
+                    self.fill_main_row(idx, page_rows[i], pinned=False)
+                else:
+                    for c in range(10):  # 10 колонок в таблице TOP200
+                        self.tbl_main.setItem(idx, c, QTableWidgetItem(""))
+        finally:
+            self.tbl_main.blockSignals(False)
+
+
+    # ---------------- STEP 3: Focus5 ----------------
+
+    # ---------------- STEP 3: Candidates (10) ----------------
+    def _on_focus_tick_safe(self):
+        """Safe wrapper for focus timer to avoid crashing the UI event loop."""
+        try:
+            self.on_focus_tick()
+        except Exception as e:
+            try:
+                log_error("focus_tick", e)
+            except Exception:
+                pass
+
+
+    def on_focus_tick(self):
+        """Periodic refresh for Candidate table (every 10 sec).
+        Light network: one market/tickers call (cached very short) to refresh lastPrice.
+        No heavy klines here.
+        """
+        try:
+            # refresh prices for candidate symbols (fast)
+            self._refresh_candidate_prices()
+            # update entry/exit color states
+            self._update_candidate_states()
+            # render second table
+            self.render_focus_table()
+        except Exception:
+            logging.exception("Candidates refresh failed")
+
+    def _candidate_symbols(self) -> List[str]:
+        # From last full scan: only computed candidates have candidate_pct > 0
+        syms = [s for s, r in self.rows_by_symbol.items() if getattr(r, "candidate_pct", 0.0) > 0.0 and s.endswith("USDT")]
+        syms.sort(key=lambda s: (-(self.rows_by_symbol.get(s).candidate_pct or 0.0),
+                                -(self.rows_by_symbol.get(s).short_prob or 0.0),
+                                -(self.rows_by_symbol.get(s).short_conf or 0.0)))
+        return syms[:10]
+
+    def _refresh_candidate_prices(self) -> None:
+        syms = self._candidate_symbols()
+        if not syms:
+            return
+        try:
+            tickers = self.client.get_top200_turnover(200, ttl_sec=2)  # 1 request, cached 2 sec
+        except Exception:
+            return
+        mp = {str(t.get("symbol", "")).upper(): t for t in (tickers or [])}
+        for s in syms:
+            t = mp.get(s)
+            if not t:
+                continue
+            try:
+                px = float(t.get("lastPrice") or t.get("markPrice") or 0.0)
+            except Exception:
+                px = 0.0
+            if px > 0:
+                try:
+                    self.rows_by_symbol[s].price_now = px
+                except Exception:
+                    pass
+
+    def _update_candidate_states(self) -> None:
+        if not hasattr(self, "_cand_state"):
+            self._cand_state = {}  # symbol -> state
+        syms = self._candidate_symbols()
+        for s in syms:
+            r = self.rows_by_symbol.get(s)
+            if not r:
+                continue
+            state = self._cand_state.get(s, "OUT")
+            # ENTRY condition
+            enter = (r.candidate_pct >= CANDIDATE_MIN and r.short_conf >= CAND_CONF_MIN and r.exhaustion >= CAND_EXH_MIN)
+            # EXIT condition (hysteresis)
+            exit_ = (r.candidate_pct < (CANDIDATE_MIN - 10.0) or r.short_conf < CONF_HARD_MIN or r.exhaustion < EXH_HARD_MIN)
+            if state != "IN" and enter:
+                self._cand_state[s] = "IN"
+            elif state == "IN" and exit_:
+                self._cand_state[s] = "EXIT"
+            elif state == "EXIT":
+                # after one tick, go OUT
+                self._cand_state[s] = "OUT"
+
+    def render_focus_table(self):
+        """Render Candidates table with gates system."""
+        now = time.time()
+        
+        # Обновляем время в метке и мигаем жёлтым
+        time_str = time.strftime("%H:%M:%S")
+        self.lbl_candidates_counter.setText(f"Обновление: {time_str}")
+        self.lbl_candidates_counter.setStyleSheet("color: #ffff00; font-size: 11px; padding: 2px; font-weight: bold;")
+        
+        # Сбросим цвет через 1 сек
+        if self._candidates_flash_timer:
+            self._candidates_flash_timer.stop()
+        self._candidates_flash_timer = QTimer(self)
+        self._candidates_flash_timer.setSingleShot(True)
+        self._candidates_flash_timer.timeout.connect(
+            lambda: self.lbl_candidates_counter.setStyleSheet("color: #aaa; font-size: 11px; padding: 2px;")
+        )
+        self._candidates_flash_timer.start(1000)
+        
+        self.tbl_focus.blockSignals(True)
+        try:
+            # 1) Отбираем TOP-5 по скору + монеты со статусом Интерес+
+            all_scored = []
+            for sym, r in self.rows_by_symbol.items():
+                if not r.valid:
+                    continue
+                score = compute_candidate_score(r)
+                status, _ = compute_status(r)
+                wtype = compute_watch_type(r)
+                if score > 20 or status in ("Интерес", "Готовность", "ВХОД"):
+                    all_scored.append((sym, score, r))
+            
+            all_scored.sort(key=lambda x: x[1], reverse=True)
+            
+            # Добавляем TOP-5 и остальных с хорошим статусом
+            for sym, score, r in all_scored[:20]:  # максимум 20 кандидатов
+                if sym not in self._candidates_storage:
+                    self._candidates_storage[sym] = {
+                        "added_at": now,
+                        "score": score,
+                        "watch_type": compute_watch_type(r),
+                        "candles_5m": [],
+                        "gates_result": None,
+                    }
+                else:
+                    self._candidates_storage[sym]["score"] = score
+            
+            # 2) Загружаем 5m свечи для кандидатов (только если нет или устарели)
+            self._load_candles_for_candidates()
+            
+            # 3) Проверяем гейты для каждого кандидата
+            btc_row = self.rows_by_symbol.get("BTCUSDT")
+            btc_trend_1h = 0.0
+            btc_change_24h = 0.0
+            if btc_row:
+                btc_change_24h = btc_row.change_24h_pct
+                # btc_trend_1h можно вычислить из свечей, пока упрощаем
+            
+            for sym, data in list(self._candidates_storage.items()):
+                r = self.rows_by_symbol.get(sym)
+                if not r:
+                    continue
+                
+                candles = data.get("candles_5m", [])
+                if len(candles) >= 10:
+                    # Вызываем систему гейтов
+                    status, signal, gates_result = compute_status_with_gates(
+                        r, candles, btc_trend_1h, btc_change_24h
+                    )
+                    data["gates_result"] = gates_result
+                    data["status"] = status
+                    data["signal"] = signal
+                    
+                    # Обновляем торговые уровни в CoinRow если есть
+                    if gates_result and gates_result.all_passed:
+                        r.entry_price = gates_result.entry_price
+                        r.sl_price = gates_result.sl_price
+                        r.tp1 = gates_result.tp1_price
+                        r.tp2 = gates_result.tp2_price
+                        r.rr = gates_result.rr_ratio
+                else:
+                    # Нет свечей - используем простой статус
+                    status, signal = compute_status(r)
+                    data["status"] = status
+                    data["signal"] = signal
+                    data["watch_type"] = compute_watch_type(r)
+            
+            # 4) Удаляем по таймауту
+            to_remove = []
+            for sym, data in self._candidates_storage.items():
+                age_min = (now - data.get("added_at", now)) / 60.0
+                status = data.get("status", "")
+                
+                # ВХОД держим бесконечно
+                if status == "ВХОД":
+                    continue
+                
+                # > 30 минут — удаляем
+                if age_min > 30:
+                    to_remove.append(sym)
+            
+            for sym in to_remove:
+                self._candidates_storage.pop(sym, None)
+            
+            # 5) Сортируем: ВХОД > Готовность > Интерес > по скору
+            status_priority = {"ВХОД": 0, "Готовность": 1, "Интерес": 2, "Наблюдение": 3}
+            candidates = []
+            for sym, data in self._candidates_storage.items():
+                r = self.rows_by_symbol.get(sym)
+                if r:
+                    status = data.get("status", "")
+                    priority = status_priority.get(status, 99)
+                    score = data.get("score", 0)
+                    candidates.append((sym, priority, score, data))
+            
+            candidates.sort(key=lambda x: (x[1], -x[2]))
+            # ограничение: не более 20 строк во второй таблице
+            candidates = candidates[:20]
+            
+            # 6) Рендерим таблицу
+            self.tbl_focus.clearContents()
+            self.tbl_focus.setRowCount(max(1, len(candidates)))
+            
+            status_colors = {
+                "ВХОД": QColor(0, 120, 0),
+                "Готовность": QColor(140, 100, 0),
+                "Интерес": QColor(100, 100, 50),
+                "Наблюдение": QColor(60, 60, 60),
+            }
+            
+            for i, (sym, _, score, data) in enumerate(candidates):
+                r = self.rows_by_symbol.get(sym)
+                if not r:
+                    continue
+                
+                status = data.get("status", "")
+                signal = data.get("signal", "")
+                wtype = data.get("watch_type", "")
+                added_at = data.get("added_at", now)
+                age_min = (now - added_at) / 60.0
+                remaining = max(0, 30 - age_min) if status != "ВХОД" else float('inf')
+                
+                gates_result = data.get("gates_result")
+                
+                # Уровни из гейтов или из CoinRow
+                entry = gates_result.entry_price if gates_result and gates_result.entry_price > 0 else r.entry_price
+                sl = gates_result.sl_price if gates_result and gates_result.sl_price > 0 else r.sl_price
+                tp1 = gates_result.tp1_price if gates_result and gates_result.tp1_price > 0 else r.tp1
+                rr = gates_result.rr_ratio if gates_result and gates_result.rr_ratio > 0 else r.rr
+                
+                # === ML ЛОГИРОВАНИЕ ===
+                try:
+                    from core.ml_logger import log_candidate
+                    btc_row = self.rows_by_symbol.get("BTCUSDT")
+                    log_candidate(
+                        symbol=sym,
+                        price=r.price_now,
+                        high_24h=r.high_24h,
+                        low_24h=r.low_24h,
+                        change_24h_pct=r.change_24h_pct,
+                        turnover_24h=r.vol24_m * 1_000_000,
+                        funding_rate=r.funding_rate,
+                        range_position=r.range_position,
+                        dist_to_high_pct=r.dist_to_high_pct,
+                        watch_type=wtype,
+                        status=status,
+                        score=score,
+                        gates_result=gates_result,
+                        btc_price=btc_row.price_now if btc_row else 0,
+                        btc_change_24h=btc_row.change_24h_pct if btc_row else 0,
+                    )
+                except Exception:
+                    pass  # не критично
+                
+                # Колонки таблицы
+                vals = [
+                    r.coin,
+                    status,
+                    (wtype or ""),
+                    signal[:30] if signal else "",  # обрезаем длинный сигнал
+                    f"{score:.0f}",
+                    f"{r.range_position:.1f}%",
+                    f"{r.dist_to_high_pct:.2f}%",
+                    f"{r.change_24h_pct:.2f}%",
+                    f"{r.funding_rate:.4f}",
+                    fmt_price(r.price_now),
+                    fmt_price(entry) if entry > 0 else "—",
+                    fmt_price(sl) if sl > 0 else "—",
+                    fmt_price(tp1) if tp1 > 0 else "—",
+                    f"{rr:.2f}" if rr > 0 else "—",
+                    f"{r.vol24_m}M",
+                    f"{age_min:.0f}м",
+                    f"{remaining:.0f}м" if remaining != float('inf') else "∞",
+                ]
+                
+                bg = status_colors.get(status, QColor(40, 40, 40))
+                
+                for c, v in enumerate(vals):
+                    it = QTableWidgetItem(v)
+                    it.setTextAlignment(Qt.AlignCenter)
+                    it.setBackground(bg)
+                    if c == 16 and remaining < 5 and remaining != float('inf'):
+                        it.setForeground(QColor(255, 100, 100))
+                    else:
+                        it.setForeground(QColor(255, 255, 255))
+                    self.tbl_focus.setItem(i, c, it)
+
+        finally:
+            self.tbl_focus.blockSignals(False)
+    
+    def _load_candles_for_candidates(self):
+        """Загружает 5m свечи для кандидатов (только если нужно)."""
+        now = time.time()
+        
+        for sym, data in self._candidates_storage.items():
+            # Проверяем нужно ли обновлять (каждые 60 сек)
+            last_load = data.get("candles_loaded_at", 0)
+            if now - last_load < 60:
+                continue
+            
+            try:
+                # Загружаем 20 свечей 5m (100 минут)
+                candles = self.client.get_kline(sym, 5, 20, ttl_sec=30)
+                if candles:
+                    data["candles_5m"] = candles
+                    data["candles_loaded_at"] = now
+            except Exception as e:
+                # Не критично, продолжаем
+                pass
+
+    def row_background(self, r: CoinRow, pinned: bool) -> QColor:
+        if pinned:
+            return QColor(70, 95, 120)
+        if not r.valid:
+            return QColor(35, 35, 35)
+
+        cand = r.candidate_pct
+        rr = r.rr
+
+        if cand >= 80 and rr >= 2.5:
+            return QColor(20, 80, 35)
+        if cand >= 70 and rr >= 2.0:
+            return QColor(30, 110, 45)
+        if cand >= 60 and rr >= 1.8:
+            return QColor(55, 140, 70)
+        if cand >= 65 and r.short_conf < 55:
+            return QColor(140, 120, 35)
+        if 1.5 <= rr < 1.8:
+            return QColor(150, 135, 55)
+        if rr < 1.5:
+            return QColor(165, 150, 80)
+        return QColor(40, 40, 40)
+
+    def fill_main_row(self, row_idx: int, r: CoinRow, pinned: bool):
+        # Простые цвета для TOP200
+        bg = QColor(0, 0, 0)
+        fg = QColor(255, 255, 255)
+        
+        # Подсветка по позиции
+        if r.valid and r.range_position > 90:
+            bg = QColor(60, 60, 0)  # жёлтый оттенок для высоких позиций
+        elif r.valid and r.range_position > 80:
+            bg = QColor(40, 40, 0)
+
+        def make_item(v: str) -> QTableWidgetItem:
+            it = QTableWidgetItem(v)
+            it.setBackground(QBrush(bg))
+            it.setForeground(QBrush(fg))
+            it.setTextAlignment(Qt.AlignCenter)
+            it.setFlags(it.flags() & ~Qt.ItemIsEditable)
+            return it
+
+        if not r.valid:
+            vals = [
+                str(r.top_rank or 0),
+                r.coin or "N/A",
+                "0.0%", "0.0%", "0.0%",
+                "N/A", "~0", "0.0000",
+                "N/A", "N/A"
+            ]
+        else:
+            # Колонки: Ранг, Монета, Позиция%, До хая%, 24ч%, Цена, Оборот, Фандинг, Макс, Мин
+            vals = [
+                str(r.top_rank),
+                r.coin,
+                f"{r.range_position:.1f}%",
+                f"{r.dist_to_high_pct:.2f}%",
+                f"{r.change_24h_pct:.2f}%",
+                fmt_price(r.price_now),
+                f"{r.vol24_m}M",
+                f"{r.funding_rate:.4f}",
+                fmt_price(r.high_24h),
+                fmt_price(r.low_24h),
+            ]
+
+        for c, val in enumerate(vals):
+            self.tbl_main.setItem(row_idx, c, make_item(val))
+
+    # ---------------- Selection + charts ----------------
+    def get_selected_symbol_from(self, table: QTableWidget, symbol_col: int, add_usdt: bool = True) -> Optional[str]:
+        """Return selected symbol from any QTableWidget.
+
+        Why this exists:
+        - In STEP 5 (ORDERBOOK DISABLED)
+# NOTE: Order Book окно временно отключено по запросу пользователя.
+# Мы вернёмся к стакану позже отдельным шагом, когда потребуется. we want Focus5 selection to behave like Top20 selection.
+        - Tables have different column indexes for 'symbol'.
+        """
+        items = table.selectedItems()
+        if not items:
+            return None
+        r = items[0].row()
+        it = table.item(r, symbol_col)
+        if not it:
+            return None
+        sym = it.text().strip()
+        if not sym or sym in ("N/A",):
+            return None
+        return sym + "USDT" if add_usdt and not sym.endswith("USDT") else sym
+
+    def get_selected_symbol(self) -> Optional[str]:
+        """Backwards-compatible helper for main Top20 table."""
+        # Монета в колонке 1 (индекс 1)
+        return self.get_selected_symbol_from(self.tbl_main, 1, add_usdt=True)
+
+    def _on_table_double_click(self, row_idx, col_idx):
+        """Двойной клик на монету - открыть график."""
+        print(f"[DEBUG-DBLCLICK] ==========================================")
+        print(f"[DEBUG-DBLCLICK] Double click TRIGGERED: row={row_idx}, col={col_idx}")
+        print(f"[DEBUG-DBLCLICK] HAS_CHART={HAS_CHART}")
+        print(f"[DEBUG-DBLCLICK] self.sender()={self.sender()}")
+        print(f"[DEBUG-DBLCLICK] self.tbl_main={self.tbl_main}")
+        print(f"[DEBUG-DBLCLICK] self.tbl_focus={self.tbl_focus}")
+        
+        if not HAS_CHART:
+            print("[DEBUG-DBLCLICK] ERROR: Chart window not available (HAS_CHART=False)")
+            return
+        try:
+            table = self.sender()
+            print(f"[DEBUG-DBLCLICK] table from sender: {table}")
+            print(f"[DEBUG-DBLCLICK] table == tbl_main: {table == self.tbl_main}")
+            print(f"[DEBUG-DBLCLICK] table == tbl_focus: {table == self.tbl_focus}")
+            
+            # Определяем колонку с символом
+            if table == self.tbl_main:
+                item = table.item(row_idx, 1)  # Колонка "Монета"
+                print(f"[DEBUG-DBLCLICK] Using tbl_main, col=1")
+            else:
+                item = table.item(row_idx, 0)  # Первая колонка в tbl_focus
+                print(f"[DEBUG-DBLCLICK] Using tbl_focus, col=0")
+            
+            print(f"[DEBUG-DBLCLICK] item={item}")
+            if not item:
+                print("[DEBUG-DBLCLICK] ERROR: item is None")
+                return
+            
+            symbol = item.text()
+            print(f"[DEBUG-DBLCLICK] symbol from item: '{symbol}'")
+            if not symbol:
+                print("[DEBUG-DBLCLICK] ERROR: symbol is empty")
+                return
+            if not symbol.endswith("USDT"):
+                symbol += "USDT"
+            print(f"[DEBUG-DBLCLICK] symbol after USDT fix: '{symbol}'")
+            
+            print(f"[DEBUG-DBLCLICK] rows_by_symbol keys count: {len(self.rows_by_symbol)}")
+            row = self.rows_by_symbol.get(symbol)
+            print(f"[DEBUG-DBLCLICK] row from rows_by_symbol: {row}")
+            if not row:
+                print(f"[DEBUG-DBLCLICK] ERROR: Row not found for {symbol}")
+                print(f"[DEBUG-DBLCLICK] Available symbols (first 10): {list(self.rows_by_symbol.keys())[:10]}")
+                return
+            
+            # Загружаем свечи для графика
+            print(f"[DEBUG-DBLCLICK] Loading klines...")
+            klines = {}
+            try:
+                for tf in ["15", "60", "240"]:
+                    print(f"[DEBUG-DBLCLICK] Loading klines for tf={tf}...")
+                    klines[tf] = self.client.get_kline(symbol, int(tf) if tf.isdigit() else 60, 100)
+                    print(f"[DEBUG-DBLCLICK] Klines {tf}: {len(klines[tf])} candles")
+            except Exception as e:
+                print(f"[DEBUG-DBLCLICK] Klines error: {e}")
+                import traceback
+                traceback.print_exc()
+            
+            # BTC данные
+            btc_row = self.rows_by_symbol.get("BTCUSDT")
+            btc_price = btc_row.price_now if btc_row else 0
+            btc_change = btc_row.change_24h_pct if btc_row else 0
+            print(f"[DEBUG-DBLCLICK] BTC: price={btc_price}, change={btc_change}")
+            
+            print(f"[DEBUG-DBLCLICK] Calling show_chart...")
+            show_chart(row, btc_price, btc_change, klines)
+            print(f"[DEBUG-DBLCLICK] show_chart COMPLETED")
+            
+        except Exception as e:
+            print(f"[DEBUG-DBLCLICK] EXCEPTION: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def on_main_selection(self):
+        sym = self.get_selected_symbol()
+        if sym:
+            self.update_charts(sym)
+            
+    def on_focus_selection(self):
+        """Candidates selection should also update charts."""
+        # Монета в колонке 0
+        sym = self.get_selected_symbol_from(self.tbl_focus, 0, add_usdt=True)
+        if sym:
+            self.update_charts(sym)
+
+    # -------------------- STEP 5 (ORDERBOOK DISABLED)
+# NOTE: Order Book окно временно отключено по запросу пользователя.
+# Мы вернёмся к стакану позже отдельным шагом, когда потребуется.: Metrics toggle --------------------
+    def on_toggle_metrics(self, checked: bool):
+        """Show/hide expanded metric columns in Top20 table WITHOUT recalculation."""
+        self.set_metrics_visible(checked)
+
+    def set_metrics_visible(self, visible: bool):
+        """Hide/show expanded columns (metrics) without triggering any recalculation."""
+        # Теперь у нас только 10 базовых колонок - все видимы
+        # Функция оставлена для обратной совместимости
+        pass
+
+    def update_charts(self, symbol: str):
+        try:
+            interval_name, bars = GRAPH_FETCH_PLAN.get(self.current_period, ("15m", 288))
+            interval_min = BYBIT_INTERVAL_MIN.get(interval_name, 15)
+            kl = self.client.get_kline(symbol, interval_min, bars)
+
+            row = self.rows_by_symbol.get(symbol)
+            price_now = row.price_now if row and row.price_now > 0 else (kl[-1]["close"] if kl else 0.0)
+            supports, resistances = compute_support_resistance(kl, float(price_now)) if price_now else ([], [])
+
+            self.charts.plot(
+                f"{symbol} — {self.current_period}",
+                kl,
+                row=row,
+                supports=supports,
+                resistances=resistances
+            )
+        except Exception as e:
+            log_error("MainWindow.update_charts()", e)
+            self.lbl_status.setText(f"Ошибка графика (логи: {LOG_DIR})")
+
+    # ---------------- Recommendations + Telegram (TZ v10.1) ----------------
+    def render_recommendations_wait(self):
+        self.tbl_rec.blockSignals(True)
+        try:
+            self.tbl_rec.clearContents()
+            for r in range(3):
+                for c in range(self.tbl_rec.columnCount()):
+                    self.tbl_rec.setItem(r, c, QTableWidgetItem(""))
+            self.tbl_rec.setItem(0, 4, QTableWidgetItem("Ожидаем завершения анализа 200/200"))
+        finally:
+            self.tbl_rec.blockSignals(False)
+
+    def _format_telegram_payload(self, top3: List[CoinRow]) -> str:
+        if not top3:
+            return "Нет рекомендаций"
+
+        lines = ["<b>SHORT рекомендации (TOP-3)</b>"]
+        for i, r in enumerate(top3, start=1):
+            lines.append(
+                f"\n<b>{i}) {r.coin}</b>\n"
+                f"Сделка: <b>SHORT</b>\n"
+                f"Entry: <b>{fmt_price(r.entry_price)}</b>\n"
+                f"Плечо: <b>{self.tg_lev}x</b>\n"
+                f"TP1: <b>{fmt_price(r.tp1)}</b>\n"
+                f"TP2: <b>{fmt_price(r.tp2)}</b>\n"
+                f"TP3: <b>{fmt_price(r.tp3)}</b>\n"
+                f"SL: <b>{fmt_price(r.sl_price)}</b>"
+            )
+        return "\n".join(lines)
+
+    def _send_telegram_after_scan_always(self, top3: List[CoinRow]):
+        # TZ v10.1: send after EACH completed scan (manual + auto), even if no recos.
+        if not (self.tg_token and self.tg_chat_id):
+            return
+        payload = self._format_telegram_payload(top3)
+        try:
+            tg_send_message(self.tg_token, int(self.tg_chat_id), payload, self.tg_thread_id)
+        except Exception as e:
+            log_error("Telegram notify failed", e)
+
+    def render_recommendations_final(self):
+        self.tbl_rec.blockSignals(True)
+        top3: List[CoinRow] = []
+        try:
+            self.tbl_rec.clearContents()
+
+            candidates: List[CoinRow] = []
+            for sym, r in self.rows_by_symbol.items():
+                if sym in PINNED or not r.valid:
+                    continue
+                if r.candidate_pct < CANDIDATE_MIN:
+                    continue
+                if r.short_conf < CAND_CONF_MIN:
+                    continue
+                if r.exhaustion < CAND_EXH_MIN:
+                    continue
+                if not r.confirm_down:
+                    continue
+                if not r.confirm_volume:
+                    continue
+                candidates.append(r)
+
+            candidates.sort(key=lambda x: x.candidate_pct, reverse=True)
+            top3 = candidates[:3]
+
+            # Beep for new best candidate
+            if top3:
+                best = top3[0].symbol
+                if best != self._last_best_symbol_beeped:
+                    self._last_best_symbol_beeped = best
+                    beep_triple()
+
+            for i in range(3):
+                if i >= len(top3):
+                    if i == 0 and not top3:
+                        self.tbl_rec.setItem(0, 4, QTableWidgetItem("Нет уверенных кандидатов (условия TZ v10.1 не выполнены)"))
+                    continue
+
+                r = top3[i]
+                profit_txt = f"{r.profit_pct:.2f}%"
+
+                row_vals = [
+                    str(i + 1),
+                    f"{r.candidate_pct:.1f}",
+                    f"{r.vol24_m}M",
+                    r.coin,
+                    "Кандидат SHORT (подтверждено)",
+                    "Ожидает подтверждения",
+                    "Рекоменд. SHORT",
+                    "~100",
+                    "Продать",
+                    f"{self.tg_lev}x",
+                    profit_txt,
+                    fmt_price(r.tp1),
+                    fmt_price(r.tp2),
+                    fmt_price(r.tp3),
+                ]
+
+                for c, val in enumerate(row_vals):
+                    it = QTableWidgetItem(val)
+                    if c in (5, 6, 7, 8, 9):
+                        it.setForeground(QBrush(QColor(170, 90, 255)))
+                    self.tbl_rec.setItem(i, c, it)
+
+        finally:
+            self.tbl_rec.blockSignals(False)
+
+        # TZ v10.1: ALWAYS send Telegram after 200/200
+        self._send_telegram_after_scan_always(top3)
+
+    # ---------------- Errors ----------------
+    def show_error(self, title: str, message: str):
+        try:
+            QMessageBox.warning(self, title, message + f"\n\nЛоги: {ERR_FILE}")
+        except Exception:
+            pass
+
+
+# ============================================================
+# keys.py loader + console ESC wait (terminal closes on ESC after GUI)
+# ============================================================
+
+def load_keys():
+    api_key = ""
+    api_secret = ""
+    tg_token = ""
+    tg_chat_id = None
+    tg_thread_id = None
+    tg_lev = 5
+
+    try:
+        import keys  # type: ignore
+        api_key = getattr(keys, "API_KEY", "") or ""
+        api_secret = getattr(keys, "API_SECRET", "") or ""
+
+        tg_token = getattr(keys, "TG_BOT_TOKEN", "") or ""
+        tg_chat_id = getattr(keys, "TG_CHAT_ID", None)
+        tg_thread_id = getattr(keys, "TG_THREAD_ID", None)
+        tg_lev = int(getattr(keys, "TG_DEFAULT_LEVERAGE", 5) or 5)
+    except Exception:
+        pass
+
+    return api_key, api_secret, tg_token, tg_chat_id, tg_thread_id, tg_lev
+
+def wait_for_esc_after_gui():
+    try:
+        import msvcrt
+        print("\nGUI закрыт. Нажмите ESC чтобы закрыть терминал…")
+        while True:
+            if msvcrt.kbhit():
+                ch = msvcrt.getch()
+                if ch == b"\x1b":
+                    break
+            time.sleep(0.05)
+    except Exception:
+        try:
+            input("\nGUI закрыт. Нажмите Enter чтобы закрыть терминал…")
+        except Exception:
+            pass
+
+
+# ============================================================
+# main()
+# ============================================================
+
+def main():
+    print("[DEBUG-MAIN] ==========================================")
+    print("[DEBUG-MAIN] Application starting...")
+    print(f"[DEBUG-MAIN] HAS_CHART={HAS_CHART}")
+    
+    install_global_excepthook()
+    ensure_logs()
+    print("[DEBUG-MAIN] Logging initialized")
+
+    api_key, api_secret, tg_token, tg_chat_id, tg_thread_id, tg_lev = load_keys()
+    print("[DEBUG-MAIN] Keys loaded")
+    
+    client = BybitClient(api_key, api_secret)
+    print("[DEBUG-MAIN] BybitClient created")
+
+    app = QApplication(sys.argv)
+    print("[DEBUG-MAIN] QApplication created")
+    
+    w = MainWindow(client, tg_token, tg_chat_id, tg_thread_id, tg_lev)
+    print("[DEBUG-MAIN] MainWindow created")
+    
+    launch_trainer_live_window()  # второе окно Trainer Live
+    print("[DEBUG-MAIN] Trainer launcher called")
+
+    esc_filter = AppEscFilter(w)
+    app.installEventFilter(esc_filter)
+    print("[DEBUG-MAIN] Event filter installed")
+
+    w.show()
+    print("[DEBUG-MAIN] MainWindow shown")
+    
+    QTimer.singleShot(0, w.safe_start_scan)
+    print("[DEBUG-MAIN] Scan scheduled")
+
+    try:
+        print("[DEBUG-MAIN] Entering app.exec()...")
+        code = app.exec()
+        print(f"[DEBUG-MAIN] app.exec() returned: {code}")
+    except Exception as e:
+        log_error("app.exec()", e)
+        code = 1
+
+    wait_for_esc_after_gui()
+    sys.exit(code)
+
+if __name__ == "__main__":
+    main()

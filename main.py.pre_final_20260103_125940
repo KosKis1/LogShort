@@ -1,0 +1,978 @@
+# ===== main.py =====
+# Bybit SHORT Scanner — Main Entry Point
+# =======================================
+
+import os
+import sys
+import time
+import json
+import subprocess
+from typing import Dict, List, Optional
+
+from PySide6.QtCore import Qt, QTimer, QEvent, QObject
+from PySide6.QtGui import QColor, QFont
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+    QPushButton, QLabel, QTableWidget, QTableWidgetItem,
+    QHeaderView, QAbstractItemView, QSplitter, QMessageBox
+)
+
+# Импорты модулей
+from core.config import get_config, AppConfig
+from core.types import CoinRow
+from core.bybit_client import BybitClient, get_client
+from core.bridge import write_bridge_snapshot
+from core.ml_logger import get_ml_logger
+from strategies import get_strategy
+from workers import ScannerWorker, CandidatesUpdateWorker
+from ui.styles import (
+    MAIN_STYLE, TABLE_TOP200_STYLE, TABLE_CANDIDATES_STYLE,
+    BTN_EXIT_STYLE, SCANNER_SIZE, ROW_HEIGHT
+)
+from ui.dialogs import CountdownDialog
+
+# Chart window (опционально)
+try:
+    from ui.chart_window import show_chart
+    HAS_CHART = True
+    print("[DEBUG] chart_window imported successfully")
+except ImportError as e:
+    HAS_CHART = False
+    print(f"[DEBUG] chart_window not available: {e}")
+
+
+# === V2 IMPORTS (added by patch) ===
+try:
+    from core.config_v2 import USE_NEW_UI
+    from core.engine_v2 import update_scan_timers, get_scan_state
+    from ui.table_headers_v2 import get_header_manager
+    V2_AVAILABLE = True
+    print("[TRACE-V2] V2 модули загружены успешно")
+except ImportError as e:
+    V2_AVAILABLE = False
+    USE_NEW_UI = False
+    print(f"[TRACE-V2] V2 модули недоступны: {e}")
+# === END V2 IMPORTS ===
+
+# Константы
+CONFIG = get_config()
+PAGE_SIZE = CONFIG.page_size
+AUTO_RECALC_MIN = CONFIG.auto_recalc_minutes
+
+
+class EscFilter(QObject):
+    """Фильтр ESC для отмены авто-сканирования."""
+    def __init__(self, callback):
+        super().__init__()
+        self.callback = callback
+    
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.KeyPress and event.key() == Qt.Key_Escape:
+            self.callback()
+            return True
+        return False
+
+
+class MainWindow(QMainWindow):
+    """Главное окно сканера."""
+    
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Bybit SHORT Scanner — Modular v3.0")
+        self.resize(*SCANNER_SIZE)
+        self.setMinimumSize(1400, 800)
+        
+        # Компоненты
+        self.client = get_client()
+        self.strategy = get_strategy()
+        self.ml_logger = get_ml_logger()
+        
+        # Состояние
+        self.rows: Dict[str, CoinRow] = {}
+        self.worker: Optional[ScannerWorker] = None
+        self.cand_worker: Optional[CandidatesUpdateWorker] = None
+        self.current_page = 0
+        self.scan_in_progress = False
+        self.cand_update_in_progress = False
+        
+        # Сортировка
+        self.sort_col = 6  # По умолчанию по обороту
+        self.sort_desc = True
+        
+        # UI
+        self._build_ui()
+        self._apply_styles()
+        
+        # Таймеры
+        self.auto_timer = QTimer(self)
+        self.auto_timer.setInterval(AUTO_RECALC_MIN * 60 * 1000)
+        self.auto_timer.timeout.connect(self._start_countdown)
+        self.auto_timer.start()
+        
+        self.countdown_timer: Optional[QTimer] = None
+        self.countdown_dialog: Optional[CountdownDialog] = None
+        self.countdown_sec = 0
+        
+        # ESC фильтр
+        self.esc_filter = EscFilter(self._cancel_countdown)
+        QApplication.instance().installEventFilter(self.esc_filter)
+        
+
+
+        # Live window (создаётся по кнопке, чтобы не тратить ресурсы)
+        self.live_window = None  # type: ignore
+
+        # Таймеры UI (120с полный пересчёт)
+        self._full_countdown = 120
+        self._cand_countdown = 5  # Начальная задержка перед первым обновлением
+        self._cand_update_delay = 5  # Задержка между обновлениями (сек)
+
+        self.full_countdown_timer = QTimer(self)
+        self.full_countdown_timer.setInterval(1000)
+        self.full_countdown_timer.timeout.connect(self._tick_full_countdown)
+        self.full_countdown_timer.start()
+
+        self.cand_countdown_timer = QTimer(self)
+        self.cand_countdown_timer.setInterval(1000)
+        self.cand_countdown_timer.timeout.connect(self._tick_cand_countdown)
+        self.cand_countdown_timer.start()
+
+        # Загрузка состояния
+        self._load_state()
+    
+    def _build_ui(self):
+        root = QWidget()
+        self.setCentralWidget(root)
+        main = QVBoxLayout(root)
+        main.setContentsMargins(10, 10, 10, 10)
+        main.setSpacing(8)
+        
+        # === Top bar ===
+        topbar = QHBoxLayout()
+        
+        self.lbl_status = QLabel("Готово")
+        self.lbl_status.setMinimumWidth(200)
+        topbar.addWidget(self.lbl_status)
+        
+        self.lbl_progress = QLabel("UNIVERSE: 0/200")
+        topbar.addWidget(self.lbl_progress)
+        
+        topbar.addStretch()
+        
+        self.btn_prev = QPushButton("◀ Пред")
+        self.btn_next = QPushButton("След ▶")
+        self.btn_refresh = QPushButton("🔄 Обновить")
+        
+        self.btn_prev.clicked.connect(self._prev_page)
+        self.btn_next.clicked.connect(self._next_page)
+        self.btn_refresh.clicked.connect(self._start_scan)
+        
+        topbar.addWidget(self.btn_prev)
+        topbar.addWidget(self.btn_next)
+        topbar.addWidget(self.btn_refresh)
+        
+        self.btn_live = QPushButton("📈 Live")
+        self.btn_live.clicked.connect(self._toggle_live)
+        topbar.addWidget(self.btn_live)
+        
+        self.btn_exit = QPushButton("⏻ Выход")
+        self.btn_exit.setStyleSheet(BTN_EXIT_STYLE)
+        self.btn_exit.clicked.connect(self._exit_app)
+        topbar.addWidget(self.btn_exit)
+        
+        main.addLayout(topbar)
+        
+        # === Splitter ===
+        splitter = QSplitter(Qt.Vertical)
+        
+        # TOP200 таблица
+        top_widget = QWidget()
+        top_layout = QVBoxLayout(top_widget)
+        top_layout.setContentsMargins(0, 0, 0, 0)
+        
+        self.lbl_top200 = QLabel("📊 TOP 200 по обороту")
+        self.lbl_top200.setStyleSheet("color: #00d4ff; font-size: 14px; font-weight: bold;")
+        top_layout.addWidget(self.lbl_top200)
+        
+        self.lbl_full_timer = QLabel("До пересчёта: 120 сек")
+        self.lbl_full_timer.setStyleSheet("color:#cfcfcf; font-size:12px;")
+        top_layout.addWidget(self.lbl_full_timer)
+        
+        self.tbl_main = QTableWidget()
+        self.tbl_main.setColumnCount(10)
+        self.tbl_main.setHorizontalHeaderLabels([
+            "Ранг", "Монета", "Позиция%", "До хая%", "24ч%",
+            "Цена", "Оборот(М)", "Фандинг", "Статус", "Скор"
+        ])
+        self.tbl_main.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.tbl_main.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.tbl_main.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.tbl_main.verticalHeader().setDefaultSectionSize(ROW_HEIGHT)
+        self.tbl_main.setStyleSheet(TABLE_TOP200_STYLE)
+        
+        # Подключаем сигналы
+        self.tbl_main.cellDoubleClicked.connect(self._on_double_click)
+        self.tbl_main.horizontalHeader().sectionClicked.connect(self._on_header_click)
+        print("[DEBUG] tbl_main signals connected")
+        
+        top_layout.addWidget(self.tbl_main)
+        
+        splitter.addWidget(top_widget)
+        
+        # Кандидаты таблица
+        cand_widget = QWidget()
+        cand_layout = QVBoxLayout(cand_widget)
+        cand_layout.setContentsMargins(0, 0, 0, 0)
+        
+        self.lbl_candidates = QLabel("🎯 Кандидаты на SHORT")
+        self.lbl_candidates.setStyleSheet("color: #ffd700; font-size: 14px; font-weight: bold;")
+        cand_layout.addWidget(self.lbl_candidates)
+        
+        self.lbl_cand_timer = QLabel("До обновления: 10 сек")
+        self.lbl_cand_timer.setStyleSheet("color:#cfcfcf; font-size:12px;")
+        cand_layout.addWidget(self.lbl_cand_timer)
+        
+        self.tbl_cand = QTableWidget()
+        self.tbl_cand.setColumnCount(15)
+        self.tbl_cand.setHorizontalHeaderLabels([
+            "Монета", "Время", "Статус", "Скор", "Тип", "Позиция%", "До хая%",
+            "24ч%", "Вход", "SL", "TP1", "R/R", "G0", "G1", "G2"
+        ])
+        self.tbl_cand.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.tbl_cand.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.tbl_cand.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.tbl_cand.verticalHeader().setDefaultSectionSize(ROW_HEIGHT - 2)
+        self.tbl_cand.setStyleSheet(TABLE_CANDIDATES_STYLE)
+        
+        # Подключаем сигнал двойного клика
+        self.tbl_cand.cellDoubleClicked.connect(self._on_double_click_cand)
+        print("[DEBUG] tbl_cand signals connected")
+        
+        cand_layout.addWidget(self.tbl_cand)
+        
+        splitter.addWidget(cand_widget)
+        splitter.setSizes([400, 300])
+        
+        main.addWidget(splitter)
+    
+    def _apply_styles(self):
+        self.setStyleSheet(MAIN_STYLE)
+        f = QFont()
+        f.setPointSize(11)
+        self.tbl_main.setFont(f)
+        self.tbl_cand.setFont(f)
+    
+    # === Сканирование ===
+    
+    def _start_scan(self):
+        if self.scan_in_progress:
+            return
+        
+        self.scan_in_progress = True
+        self.lbl_status.setText("⏳ Сканирование...")
+        try:
+            self.lbl_full_timer.setStyleSheet("color:#ffd700; font-size:12px; font-weight:bold;")
+            self.lbl_full_timer.setText("Пересчёт: 0/…")
+        except Exception:
+            pass
+        self.btn_refresh.setEnabled(False)
+        
+        self.worker = ScannerWorker(
+            client=self.client,
+            strategy=self.strategy,
+            top_n=CONFIG.universe_size,
+            max_workers=CONFIG.max_workers
+        )
+        self.worker.progress.connect(self._on_progress)
+        self.worker.finished_all.connect(self._on_finished)
+        self.worker.error.connect(self._on_error)
+        self.worker.start()
+    
+    def _on_progress(self, current: int, total: int, symbol: str):
+        self.lbl_progress.setText(f"UNIVERSE: {current}/{total} | {symbol}")
+        try:
+            self.lbl_full_timer.setStyleSheet("color:#ffd700; font-size:12px; font-weight:bold;")
+            self.lbl_full_timer.setText(f"Пересчёт: {current}/{total}")
+        except Exception:
+            pass
+    
+    def _on_finished(self, results: Dict[str, CoinRow]):
+        self.rows = results
+        self.scan_in_progress = False
+        self.btn_refresh.setEnabled(True)
+        self.lbl_status.setText(f"✅ Готово ({len(results)} монет)")
+        self._full_countdown = 120
+        try:
+            self.lbl_full_timer.setStyleSheet("color:#cfcfcf; font-size:12px;")
+            self.lbl_full_timer.setText(f"До пересчёта: {self._full_countdown} сек")
+        except Exception:
+            pass
+        
+        # Обновляем таблицы
+        self._render_main_table()
+        self._render_candidates()
+        
+        # Записываем bridge для Trainer
+        write_bridge_snapshot(self.rows, top_n=30)
+        
+        # Сохраняем состояние
+        self._save_state()
+    
+    def _on_error(self, msg: str):
+        self.scan_in_progress = False
+        self.btn_refresh.setEnabled(True)
+        self.lbl_status.setText("❌ Ошибка")
+        QMessageBox.warning(self, "Ошибка", msg)
+    
+    # === Таблицы ===
+    
+    def _render_main_table(self):
+        # Функция получения значения для сортировки
+        def get_sort_key(r: CoinRow):
+            if self.sort_col == 0:    # Ранг (по обороту)
+                return r.vol24_m
+            elif self.sort_col == 1:  # Монета
+                return r.symbol
+            elif self.sort_col == 2:  # Позиция%
+                return r.range_position
+            elif self.sort_col == 3:  # До хая%
+                return r.dist_high_pct
+            elif self.sort_col == 4:  # 24ч%
+                return r.change_24h_pct
+            elif self.sort_col == 5:  # Цена
+                return r.price_now
+            elif self.sort_col == 6:  # Оборот
+                return r.vol24_m
+            elif self.sort_col == 7:  # Фандинг
+                return r.funding_rate
+            elif self.sort_col == 8:  # Статус
+                status_order = {"ВХОД": 4, "Готовность": 3, "Интерес": 2, "Наблюдение": 1, "": 0}
+                return status_order.get(r.status, 0)
+            elif self.sort_col == 9:  # Скор
+                return r.score
+            return r.vol24_m
+        
+        # Сортируем
+        sorted_rows = sorted(
+            self.rows.values(),
+            key=get_sort_key,
+            reverse=self.sort_desc
+        )
+        
+        # Пагинация
+        start = self.current_page * PAGE_SIZE
+        end = start + PAGE_SIZE
+        page_rows = sorted_rows[start:end]
+        
+        self.tbl_main.setRowCount(len(page_rows))
+        
+        for i, row in enumerate(page_rows):
+            rank = start + i + 1
+            
+            # Цвет по статусу
+            if row.status == "ВХОД":
+                color = QColor(255, 80, 80)
+            elif row.status == "Готовность":
+                color = QColor(255, 180, 0)
+            elif row.status == "Интерес":
+                color = QColor(100, 180, 255)
+            else:
+                color = QColor(200, 200, 200)
+            
+            values = [
+                str(rank),
+                row.symbol.replace("USDT", ""),
+                f"{row.range_position:.1f}",
+                f"{row.dist_high_pct:.2f}",
+                f"{row.change_24h_pct:+.1f}",
+                f"{row.price_now:.6f}",
+                f"{row.vol24_m}",
+                f"{row.funding_rate*100:.4f}",
+                row.status,
+                f"{row.score:.0f}"
+            ]
+            
+            for col, val in enumerate(values):
+                item = QTableWidgetItem(val)
+                item.setTextAlignment(Qt.AlignCenter)
+                if col >= 8:
+                    item.setForeground(color)
+                self.tbl_main.setItem(i, col, item)
+        
+        total_pages = (len(sorted_rows) + PAGE_SIZE - 1) // PAGE_SIZE
+        self.lbl_top200.setText(f"📊 TOP 200 | Страница {self.current_page + 1}/{total_pages}")
+    
+    def _render_candidates(self):
+        """
+        Отрисовка таблицы кандидатов:
+        - Колонка "Время" показывает время жизни монеты
+        - Монеты "Наблюдение" старше 30 минут удаляются
+        - Максимум 30 монет, слабые удаляются
+        """
+        import time as time_module
+        now = time_module.time()
+        
+        # Очистка старых монет со статусом "Наблюдение" (> 30 минут)
+        to_remove = []
+        for sym, row in self.rows.items():
+            if row.status == "Наблюдение" and row.added_at > 0:
+                age_min = (now - row.added_at) / 60
+                if age_min > 30:
+                    to_remove.append(sym)
+        
+        for sym in to_remove:
+            del self.rows[sym]
+            print(f"[DEBUG] Удалена монета {sym} (Наблюдение > 30 мин)")
+        
+        # Фильтруем кандидатов (со статусом)
+        candidates = [
+            r for r in self.rows.values()
+            if r.status in ("Интерес", "Готовность", "ВХОД", "Наблюдение")
+            and r.score > 20
+        ]
+        
+        # Сортируем: сначала по статусу, потом по скору
+        status_priority = {"ВХОД": 0, "Готовность": 1, "Интерес": 2, "Наблюдение": 3}
+        candidates.sort(key=lambda r: (status_priority.get(r.status, 99), -r.score))
+        
+        # Ограничение 30 монет — удаляем слабые
+        if len(candidates) > 30:
+            weak = candidates[30:]
+            candidates = candidates[:30]
+            for r in weak:
+                if r.status == "Наблюдение":
+                    if r.symbol in self.rows:
+                        del self.rows[r.symbol]
+                        print(f"[DEBUG] Удалена слабая монета {r.symbol}")
+        
+        self.tbl_cand.setRowCount(len(candidates))
+        
+        for i, row in enumerate(candidates):
+            # Цвет по статусу
+            if row.status == "ВХОД":
+                color = QColor(255, 80, 80)
+            elif row.status == "Готовность":
+                color = QColor(255, 180, 0)
+            elif row.status == "Интерес":
+                color = QColor(100, 180, 255)
+            else:
+                color = QColor(150, 150, 150)
+            
+            # Время жизни
+            if row.added_at > 0:
+                age_sec = int(now - row.added_at)
+                age_min = age_sec // 60
+                age_sec_rem = age_sec % 60
+                time_str = f"{age_min}м{age_sec_rem:02d}с"
+            else:
+                time_str = "—"
+            
+            values = [
+                row.symbol.replace("USDT", ""),
+                time_str,
+                row.status,
+                f"{row.score:.0f}",
+                row.watch_type,
+                f"{row.range_position:.1f}",
+                f"{row.dist_high_pct:.2f}",
+                f"{row.change_24h_pct:+.1f}",
+                f"{row.entry_price:.6f}",
+                f"{row.sl_price:.6f}",
+                f"{row.tp1:.6f}",
+                f"{row.rr:.2f}",
+                "✓" if row.gate0_passed else "✗",
+                "✓" if row.gate1_passed else "✗",
+                "✓" if row.gate2_passed else "✗"
+            ]
+            
+            for col, val in enumerate(values):
+                item = QTableWidgetItem(val)
+                item.setTextAlignment(Qt.AlignCenter)
+                if col <= 4:  # Монета, Время, Статус, Скор, Тип
+                    item.setForeground(color)
+                self.tbl_cand.setItem(i, col, item)
+        
+        self.lbl_candidates.setText(f"🎯 Кандидаты на SHORT ({len(candidates)})")
+    
+    def _add_to_candidates(self, row: CoinRow):
+        """Добавление монеты в кандидаты с установкой времени."""
+        import time as time_module
+        if row.added_at <= 0:
+            row.added_at = time_module.time()
+        self.rows[row.symbol] = row
+    
+    # === Двойной клик и сортировка ===
+    
+    def _on_double_click(self, row_idx: int, col_idx: int):
+        """Двойной клик на монету в TOP200 — открыть график."""
+        print(f"[DEBUG] Double click TOP200: row={row_idx}, col={col_idx}")
+        
+        if not HAS_CHART:
+            print("[DEBUG] Chart not available")
+            return
+        
+        try:
+            item = self.tbl_main.item(row_idx, 1)  # Колонка "Монета"
+            if not item:
+                return
+            
+            symbol = item.text().strip()
+            if not symbol:
+                return
+            if not symbol.endswith("USDT"):
+                symbol += "USDT"
+            
+            print(f"[DEBUG] Opening chart for {symbol}")
+            
+            row = self.rows.get(symbol)
+            if not row:
+                print(f"[DEBUG] Row not found for {symbol}")
+                return
+            
+            # Загружаем свечи
+            klines = {}
+            try:
+                for tf in ["15", "60", "240"]:
+                    klines[tf] = self.client.get_klines(symbol, tf, limit=100)
+            except Exception as e:
+                print(f"[DEBUG] Klines error: {e}")
+            
+            # BTC данные
+            btc_row = self.rows.get("BTCUSDT")
+            btc_price = btc_row.price_now if btc_row else 0
+            btc_change = btc_row.change_24h_pct if btc_row else 0
+            
+            show_chart(row, btc_price, btc_change, klines)
+            
+        except Exception as e:
+            print(f"[DEBUG] Double click error: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    def _on_double_click_cand(self, row_idx: int, col_idx: int):
+        """Двойной клик на монету в кандидатах — открыть график."""
+        print(f"[DEBUG] Double click Candidates: row={row_idx}, col={col_idx}")
+        
+        if not HAS_CHART:
+            print("[DEBUG] Chart not available")
+            return
+        
+        try:
+            item = self.tbl_cand.item(row_idx, 0)  # Колонка "Монета"
+            if not item:
+                return
+            
+            symbol = item.text().strip()
+            if not symbol:
+                return
+            if not symbol.endswith("USDT"):
+                symbol += "USDT"
+            
+            print(f"[DEBUG] Opening chart for {symbol}")
+            
+            row = self.rows.get(symbol)
+            if not row:
+                print(f"[DEBUG] Row not found for {symbol}")
+                return
+            
+            # Загружаем свечи
+            klines = {}
+            try:
+                for tf in ["15", "60", "240"]:
+                    klines[tf] = self.client.get_klines(symbol, tf, limit=100)
+            except Exception as e:
+                print(f"[DEBUG] Klines error: {e}")
+            
+            # BTC данные
+            btc_row = self.rows.get("BTCUSDT")
+            btc_price = btc_row.price_now if btc_row else 0
+            btc_change = btc_row.change_24h_pct if btc_row else 0
+            
+            show_chart(row, btc_price, btc_change, klines)
+            
+        except Exception as e:
+            print(f"[DEBUG] Double click error: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    def _on_header_click(self, col: int):
+        """Клик по заголовку — сортировка."""
+        print(f"[DEBUG] Header clicked: col={col}")
+        
+        if self.sort_col == col:
+            self.sort_desc = not self.sort_desc
+        else:
+            self.sort_col = col
+            self.sort_desc = True
+        
+        self._render_main_table()
+    
+    # === Пагинация ===
+    
+    def _prev_page(self):
+        if self.current_page > 0:
+            self.current_page -= 1
+            self._render_main_table()
+    
+    def _next_page(self):
+        total = len(self.rows)
+        max_page = (total + PAGE_SIZE - 1) // PAGE_SIZE - 1
+        if self.current_page < max_page:
+            self.current_page += 1
+            self._render_main_table()
+    
+    # === Countdown ===
+    
+    def _start_countdown(self):
+        if self.scan_in_progress:
+            return
+        
+        self.countdown_sec = 10
+        self.countdown_dialog = CountdownDialog(self)
+        self.countdown_dialog.set_seconds(self.countdown_sec)
+        self.countdown_dialog.rejected.connect(self._cancel_countdown)
+        self.countdown_dialog.show()
+        
+        self.countdown_timer = QTimer(self)
+        self.countdown_timer.setInterval(1000)
+        self.countdown_timer.timeout.connect(self._countdown_tick)
+        self.countdown_timer.start()
+    
+    def _countdown_tick(self):
+        self.countdown_sec -= 1
+        
+        if self.countdown_sec <= 0:
+            self._stop_countdown()
+            self._start_scan()
+        elif self.countdown_dialog:
+            self.countdown_dialog.set_seconds(self.countdown_sec)
+    
+    def _cancel_countdown(self):
+        self._stop_countdown()
+        self.lbl_status.setText("Авто-пересчёт отменён")
+    
+    def _stop_countdown(self):
+        if self.countdown_timer:
+            self.countdown_timer.stop()
+            self.countdown_timer = None
+        if self.countdown_dialog:
+            self.countdown_dialog.close()
+            self.countdown_dialog = None
+    
+    # === State ===
+    
+    def _save_state(self):
+        try:
+            state = {
+                "current_page": self.current_page,
+                "last_scan": time.time()
+            }
+            path = os.path.join(CONFIG.base_dir, "scanner_state.json")
+            with open(path, "w") as f:
+                json.dump(state, f)
+        except:
+            pass
+    
+    def _load_state(self):
+        try:
+            path = os.path.join(CONFIG.base_dir, "scanner_state.json")
+            if os.path.exists(path):
+                with open(path) as f:
+                    state = json.load(f)
+                self.current_page = state.get("current_page", 0)
+        except:
+            pass
+    
+
+    # === Таймеры UI ===
+    def _tick_full_countdown(self):
+        # Не тратим ресурсы во время активного сканирования
+        # === V2 CALL ===
+        print("[TRACE-V2] _tick_full_countdown выполняется")
+        if V2_AVAILABLE and USE_NEW_UI:
+            try:
+                self._update_v2_progress()
+            except Exception as e:
+                print(f"[TRACE-V2] Ошибка вызова: {e}")
+        # === END V2 CALL ===
+
+        if self.scan_in_progress:
+            return
+        self._full_countdown -= 1
+        if self._full_countdown <= 0:
+            self._full_countdown = 120
+            self._start_scan()
+            return
+        try:
+            self.lbl_full_timer.setStyleSheet("color:#cfcfcf; font-size:12px;")
+            self.lbl_full_timer.setText(f"До пересчёта: {self._full_countdown} сек")
+        except Exception:
+            pass
+
+    def _tick_cand_countdown(self):
+        """Обновление кандидатов — ждём 5 сек после завершения, потом снова запрос."""
+        if self.scan_in_progress or self.cand_update_in_progress:
+            return
+        
+        self._cand_countdown -= 1
+        
+        if self._cand_countdown <= 0:
+            # Не сбрасываем таймер здесь — он сбросится в _on_cand_finished
+            self._start_cand_update()
+            return
+        
+        try:
+            self.lbl_cand_timer.setStyleSheet("color:#cfcfcf; font-size:12px;")
+            self.lbl_cand_timer.setText(f"До обновления: {self._cand_countdown} сек")
+        except Exception:
+            pass
+
+    def _start_cand_update(self):
+        """Запуск фонового обновления кандидатов."""
+        if not self.rows or self.cand_update_in_progress:
+            return
+        
+        # Проверяем что предыдущий воркер завершился
+        if self.cand_worker is not None:
+            if self.cand_worker.isRunning():
+                print("[DEBUG] Предыдущий cand_worker ещё работает, пропускаем")
+                return
+            # Очищаем старый воркер
+            try:
+                self.cand_worker.deleteLater()
+            except Exception:
+                pass
+            self.cand_worker = None
+        
+        self.cand_update_in_progress = True
+        
+        try:
+            self.lbl_cand_timer.setStyleSheet("color:#ffd700; font-size:12px; font-weight:bold;")
+            self.lbl_cand_timer.setText("🔄 Сканирование...")
+        except Exception:
+            pass
+        
+        # Создаём воркер
+        self.cand_worker = CandidatesUpdateWorker(
+            client=self.client,
+            strategy=self.strategy,
+            rows=self.rows,
+            max_candidates=25,  # Сканируем 25 монет за 30 сек
+        )
+        self.cand_worker.progress.connect(self._on_cand_progress)
+        self.cand_worker.coin_updated.connect(self._on_coin_updated)  # Обновление в реальном времени
+        self.cand_worker.finished.connect(self._on_cand_finished)
+        self.cand_worker.error.connect(self._on_cand_error)
+        self.cand_worker.start()
+    
+    def _on_cand_progress(self, current: int, total: int, symbol: str):
+        """Прогресс обновления кандидатов."""
+        try:
+            self.lbl_cand_timer.setText(f"🔄 {current}/{total} | {symbol}")
+        except Exception:
+            pass
+    
+    def _on_coin_updated(self, symbol: str, row: CoinRow):
+        """Монета обновлена — обновляем данные (UI обновится в конце)."""
+        # Только обновляем данные, UI обновится в _on_cand_finished
+        self.rows[symbol] = row
+    
+    def _on_cand_finished(self, updated_rows: Dict[str, CoinRow]):
+        """Обновление кандидатов завершено — ждём 5 сек и снова обновляем."""
+        self.cand_update_in_progress = False
+        
+        if updated_rows:
+            self.rows = updated_rows
+        
+        # Перерисовываем таблицы
+        self._render_candidates()
+        self._render_main_table()
+        
+        # Обновляем bridge для Live
+        write_bridge_snapshot(self.rows, top_n=30)
+        
+        # Устанавливаем таймер на 5 секунд до следующего обновления
+        self._cand_countdown = 5
+        
+        try:
+            self.lbl_cand_timer.setStyleSheet("color:#22c55e; font-size:12px;")
+            self.lbl_cand_timer.setText(f"✓ Обновлено | След: {self._cand_countdown} сек")
+        except Exception:
+            pass
+        
+        print(f"[DEBUG] Candidates update finished: {len(updated_rows)} rows")
+    
+    def _on_cand_error(self, msg: str):
+        """Ошибка обновления кандидатов."""
+        self.cand_update_in_progress = False
+        print(f"[DEBUG] Candidates update error: {msg}")
+        
+        try:
+            self.lbl_cand_timer.setStyleSheet("color:#ef4444; font-size:12px;")
+            self.lbl_cand_timer.setText(f"❌ Ошибка | След: {self._cand_countdown} сек")
+        except Exception:
+            pass
+
+    def _toggle_live(self):
+        # Ленивая инициализация окна Live
+        if self.live_window is None:
+            try:
+                from trainer_live import TrainerLive  # type: ignore
+                self.live_window = TrainerLive()
+            except Exception as e:
+                QMessageBox.critical(self, "Live", f"Не удалось открыть Live: {e}")
+                self.live_window = None
+                return
+
+        if self.live_window.isVisible():
+            try:
+                if hasattr(self.live_window, "set_active"):
+                    self.live_window.set_active(False)
+            except Exception:
+                pass
+            self.live_window.hide()
+        else:
+            self.live_window.show()
+            try:
+                self.live_window.raise_()
+                self.live_window.activateWindow()
+            except Exception:
+                pass
+            try:
+                if hasattr(self.live_window, "set_active"):
+                    self.live_window.set_active(True)
+            except Exception:
+                pass
+
+
+    def _exit_app(self):
+        """Корректное завершение приложения."""
+        print("[DEBUG] Завершение приложения...")
+        
+        # Останавливаем все таймеры
+        try:
+            self.auto_timer.stop()
+            self.full_countdown_timer.stop()
+            self.cand_countdown_timer.stop()
+            if self.countdown_timer:
+                self.countdown_timer.stop()
+        except Exception:
+            pass
+        
+        # Останавливаем основной воркер сканирования
+        if self.worker and self.worker.isRunning():
+            print("[DEBUG] Останавливаем scanner worker...")
+            self.worker.stop()
+            self.worker.wait(2000)
+        
+        # Останавливаем воркер обновления кандидатов
+        if self.cand_worker and self.cand_worker.isRunning():
+            print("[DEBUG] Останавливаем candidates worker...")
+            self.cand_worker.stop()
+            self.cand_worker.wait(2000)
+        
+        # Закрываем Live окно
+        if self.live_window:
+            try:
+                self.live_window.close()
+            except Exception:
+                pass
+        
+        # Сохраняем состояние
+        self._save_state()
+        
+        print("[DEBUG] Приложение завершено")
+        QApplication.quit()
+    
+
+    def _update_v2_progress(self):
+        """[V2] Обновление прогресс-баров."""
+        print("[TRACE-V2] _update_v2_progress вызван")
+        try:
+            if not V2_AVAILABLE:
+                print("[TRACE-V2] V2_AVAILABLE = False, выход")
+                return
+            if not USE_NEW_UI:
+                print("[TRACE-V2] USE_NEW_UI = False, выход")
+                return
+            
+            print("[TRACE-V2] Обновляю таймеры...")
+            update_scan_timers()
+            scan_state = get_scan_state()
+            
+            header_mgr = get_header_manager()
+            
+            # Обновляем таймеры
+            header_mgr.update_timers(
+                level1_left=scan_state.get('level1_countdown', 0),
+                level2_left=scan_state.get('level2_countdown', 0),
+                level3_left=scan_state.get('level3_countdown', 0)
+            )
+            
+            # Данные TOP200
+            top200_data = getattr(self, 'all_results', {})
+            if top200_data:
+                rows = list(top200_data.values())
+                class_count = sum(1 for r in rows if getattr(r, 'watch_type', None))
+                pump5m_count = sum(1 for r in rows if 'Памп' in str(getattr(r, 'watch_type', '') or ''))
+                extr1m_count = sum(1 for r in rows if getattr(r, 'range_position', 0) > 90)
+                combo_count = sum(1 for r in rows if getattr(r, 'watch_type', None) and getattr(r, 'range_position', 0) > 85)
+                header_mgr.update_criteria_counts(class_count, pump5m_count, extr1m_count, combo_count)
+            
+            # Данные кандидатов
+            candidates_data = getattr(self, 'candidates', [])
+            if candidates_data:
+                watch = sum(1 for c in candidates_data if getattr(c, 'status', '') == 'Наблюдение')
+                interest = sum(1 for c in candidates_data if getattr(c, 'status', '') == 'Интерес')
+                ready = sum(1 for c in candidates_data if getattr(c, 'status', '') == 'Готовность')
+                entry = sum(1 for c in candidates_data if getattr(c, 'status', '') == 'ВХОД')
+                header_mgr.update_status_counts(watch, interest, ready, entry)
+            
+            # Обновляем UI
+            top200_text = header_mgr.get_top200_header_text()
+            cand_text = header_mgr.get_candidates_header_text()
+            
+            print(f"[TRACE-V2] top200_text: {top200_text[:50] if top200_text else 'None'}...")
+            print(f"[TRACE-V2] cand_text: {cand_text[:50] if cand_text else 'None'}...")
+            
+            if hasattr(self, 'lbl_full_timer') and top200_text:
+                self.lbl_full_timer.setText(top200_text)
+                self.lbl_full_timer.setWordWrap(True)
+                self.lbl_full_timer.setMinimumHeight(45)
+                print("[TRACE-V2] lbl_full_timer обновлён")
+            
+            if hasattr(self, 'lbl_cand_timer') and cand_text:
+                self.lbl_cand_timer.setText(cand_text)
+                self.lbl_cand_timer.setWordWrap(True)
+                self.lbl_cand_timer.setMinimumHeight(45)
+                print("[TRACE-V2] lbl_cand_timer обновлён")
+                
+        except Exception as e:
+            print(f"[TRACE-V2] Ошибка: {e}")
+
+
+    def closeEvent(self, event):
+        self._exit_app()
+        event.accept()
+
+
+def main():
+    # Создаём директории
+    os.makedirs(CONFIG.base_dir, exist_ok=True)
+    os.makedirs(CONFIG.logs_dir, exist_ok=True)
+    os.makedirs(CONFIG.ml_data_dir, exist_ok=True)
+    
+    app = QApplication(sys.argv)
+    app.setStyle('Fusion')
+    
+    window = MainWindow()
+    window.show()
+    
+    # Автозапуск сканирования
+    QTimer.singleShot(1000, window._start_scan)
+    
+    sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,520 @@
+# ===== Trainer Live — Shadow Mode v21 =====
+# Исправления:
+# - СТРОГИЙ фильтр: вход ТОЛЬКО по "Интерес"/"Готовность"/"ВХОД"
+# - Full HD интерфейс (1920x1080)
+# - SL уменьшен до 2.5%
+# ==========================================
+
+import os
+import json
+import time
+import traceback
+from datetime import datetime
+from typing import List, Dict, Optional
+
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+from PyQt5.QtCore import QTimer, Qt
+from PyQt5.QtGui import QColor, QPalette
+from PyQt5.QtWidgets import (
+    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
+    QTableWidget, QTableWidgetItem, QPushButton, QHeaderView, QFrame
+)
+import sys
+
+# Suppress warnings
+import warnings
+warnings.filterwarnings("ignore", message=".*Connection pool.*")
+import urllib3
+urllib3.disable_warnings()
+
+# ---- Paths ----
+LOG_DIR = r"C:\Pythone\Log_Short"
+BRIDGE_FILE = os.path.join(LOG_DIR, "bridge_snapshot.json")
+DECISIONS_FILE = os.path.join(LOG_DIR, "trainer_decisions.jsonl")
+STATE_FILE = os.path.join(LOG_DIR, "trainer_state.json")
+TRACE_FILE = os.path.join(LOG_DIR, "trainer_trace.txt")
+ERRORS_FILE = os.path.join(LOG_DIR, "trainer_errors.txt")
+
+# ---- Risk Management ----
+SL_PCT = 2.5              # Stop Loss: 2.5% (уменьшено с 3%)
+TP1_PCT = 1.5             # Take Profit 1: 1.5%
+TP2_PCT = 3.0             # Take Profit 2: 3.0%
+TIMEOUT_SEC = 4 * 3600
+TIMEOUT_FLAT_PCT = 1.0
+
+MIN_LEVERAGE = 5.0
+MAX_LEVERAGE = 20.0
+LEVERAGE_SAFETY = 0.8
+
+# === СТРОГИЙ ФИЛЬТР ===
+ENTRY_STATUSES = ("Интерес", "Готовность", "ВХОД")
+
+_API_SESSION: Optional[requests.Session] = None
+
+
+def get_api_session() -> requests.Session:
+    global _API_SESSION
+    if _API_SESSION is None:
+        _API_SESSION = requests.Session()
+        retry = Retry(total=2, backoff_factor=0.3, status_forcelist=[500, 502, 503, 504])
+        adapter = HTTPAdapter(pool_connections=10, pool_maxsize=10, max_retries=retry)
+        _API_SESSION.mount('https://', adapter)
+        _API_SESSION.mount('http://', adapter)
+    return _API_SESSION
+
+
+def now_str():
+    return datetime.now().strftime("%H:%M:%S")
+
+
+def _append_line(path, line):
+    try:
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(line + "\n")
+    except:
+        pass
+
+
+def trace(msg):
+    _append_line(TRACE_FILE, f"[{now_str()}] {msg}")
+
+
+def log_error(msg):
+    _append_line(ERRORS_FILE, f"[{now_str()}] {msg}")
+
+
+def log_decision(obj):
+    try:
+        obj["ts"] = time.time()
+        with open(DECISIONS_FILE, "a", encoding="utf-8") as f:
+            f.write(json.dumps(obj, ensure_ascii=False) + "\n")
+    except:
+        pass
+
+
+def fetch_prices_batch(symbols, timeout=5.0):
+    result = {}
+    if not symbols:
+        return result
+    try:
+        r = get_api_session().get(
+            "https://api.bybit.com/v5/market/tickers",
+            params={"category": "linear"}, timeout=timeout
+        )
+        if r.status_code != 200:
+            return result
+        lst = (r.json().get("result") or {}).get("list") or []
+        symbols_upper = set(s.upper() for s in symbols)
+        for item in lst:
+            sym = item.get("symbol", "")
+            if sym in symbols_upper:
+                lp = item.get("lastPrice")
+                if lp:
+                    result[sym] = float(lp)
+        return result
+    except Exception as e:
+        log_error(f"fetch_prices_batch: {e}")
+        return result
+
+
+def fetch_last_price(symbol, timeout=5.0):
+    prices = fetch_prices_batch([symbol], timeout)
+    return prices.get(symbol.upper(), 0.0)
+
+
+def fetch_high_24h(symbol, timeout=5.0):
+    try:
+        r = get_api_session().get(
+            "https://api.bybit.com/v5/market/tickers",
+            params={"category": "linear", "symbol": symbol.upper()}, timeout=timeout
+        )
+        if r.status_code != 200:
+            return 0.0
+        lst = (r.json().get("result") or {}).get("list") or []
+        if lst:
+            hp = lst[0].get("highPrice24h")
+            return float(hp) if hp else 0.0
+        return 0.0
+    except:
+        return 0.0
+
+
+def calc_adaptive_leverage(entry_price, adverse_high):
+    if entry_price <= 0 or adverse_high <= entry_price:
+        return MIN_LEVERAGE
+    adverse_move_pct = (adverse_high - entry_price) / entry_price
+    if adverse_move_pct <= 0:
+        return MIN_LEVERAGE
+    lev_max = LEVERAGE_SAFETY / adverse_move_pct
+    return max(MIN_LEVERAGE, min(MAX_LEVERAGE, lev_max))
+
+
+class TrainerLive(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Trainer Live v21 — STRICT Filter | Full HD")
+        self.resize(1920, 1000)
+        self.setMinimumSize(1400, 800)
+
+        self.trade_amount = 100.0
+        self.balance = 1000.0
+        self.positions = []
+        self.last_mtime_ns = 0
+        self.current_prices = {}
+        self.stats = {"total_trades": 0, "wins": 0, "losses": 0, "total_pnl": 0.0, "rejected": 0}
+
+        self._build_ui()
+        self._load_state()
+
+        self.bridge_timer = QTimer(self)
+        self.bridge_timer.timeout.connect(self._tick)
+        self.bridge_timer.start(5000)
+        
+        self.update_timer = QTimer(self)
+        self.update_timer.timeout.connect(self._update_live_data)
+        self.update_timer.start(10000)
+        
+        self.sl_tp_timer = QTimer(self)
+        self.sl_tp_timer.timeout.connect(self._check_sl_tp_timeout)
+        self.sl_tp_timer.start(15000)
+
+        trace("TRAINER v21 STARTED (STRICT filter)")
+        self._update_status()
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Escape:
+            self._save_state()
+            self.close()
+        else:
+            super().keyPressEvent(event)
+
+    def _build_ui(self):
+        main = QVBoxLayout(self)
+        main.setSpacing(10)
+        main.setContentsMargins(15, 15, 15, 15)
+        
+        # Top bar
+        top = QFrame()
+        top.setStyleSheet("QFrame{background:#1a1a2e;border-radius:8px;padding:10px;}")
+        top_lay = QHBoxLayout(top)
+        
+        self.status = QLabel("")
+        self.status.setStyleSheet("color:white;font-size:16px;font-weight:bold;")
+        top_lay.addWidget(self.status)
+        top_lay.addStretch()
+        
+        self.stats_label = QLabel("")
+        self.stats_label.setStyleSheet("color:#aaa;font-size:13px;")
+        top_lay.addWidget(self.stats_label)
+        top_lay.addStretch()
+        
+        btn = QPushButton("🔄 Сброс (1000$)")
+        btn.setStyleSheet("QPushButton{background:#e74c3c;color:white;border:none;padding:8px 16px;border-radius:5px;font-weight:bold;}QPushButton:hover{background:#c0392b;}")
+        btn.clicked.connect(self._reset_balance)
+        top_lay.addWidget(btn)
+        main.addWidget(top)
+        
+        # Info
+        info = QLabel(f"⚙️ SL:{SL_PCT}% | TP1:{TP1_PCT}% | TP2:{TP2_PCT}% | Timeout:{TIMEOUT_SEC//3600}ч | 📋 Вход ТОЛЬКО: {', '.join(ENTRY_STATUSES)}")
+        info.setStyleSheet("color:#888;font-size:12px;")
+        main.addWidget(info)
+
+        # Positions
+        pos_frame = QFrame()
+        pos_frame.setStyleSheet("QFrame{background:#16213e;border-radius:8px;}")
+        pos_lay = QVBoxLayout(pos_frame)
+        pos_lay.addWidget(QLabel("📊 Открытые позиции"))
+        
+        self.pos_table = QTableWidget(0, 11)
+        self.pos_table.setHorizontalHeaderLabels(["Монета","Статус","Тип","Вход","Текущая","SL","TP1","PnL%","PnL$","Плечо","Время"])
+        self.pos_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.pos_table.setStyleSheet("QTableWidget{background:#0f0f23;color:white;gridline-color:#333;font-size:13px;}QHeaderView::section{background:#1a1a3e;color:#00d4ff;padding:8px;border:none;font-weight:bold;}")
+        self.pos_table.setMaximumHeight(220)
+        pos_lay.addWidget(self.pos_table)
+        main.addWidget(pos_frame)
+
+        # History
+        hist_frame = QFrame()
+        hist_frame.setStyleSheet("QFrame{background:#1a1a2e;border-radius:8px;}")
+        hist_lay = QVBoxLayout(hist_frame)
+        hist_lay.addWidget(QLabel("📜 История сделок"))
+        
+        self.hist_table = QTableWidget(0, 13)
+        self.hist_table.setHorizontalHeaderLabels(["Время","Монета","Действие","Статус","Скор","Тип","Вход","Выход","Плечо","PnL%","Профит$","Баланс","Причина"])
+        self.hist_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        self.hist_table.setStyleSheet("QTableWidget{background:#0f0f23;color:white;gridline-color:#333;font-size:12px;}QHeaderView::section{background:#1a1a3e;color:#ffd700;padding:6px;border:none;font-weight:bold;}")
+        hist_lay.addWidget(self.hist_table)
+        main.addWidget(hist_frame)
+        
+        main.setStretch(2, 1)
+        main.setStretch(3, 3)
+    
+    def _update_status(self):
+        pos_sym = ", ".join([p['symbol'].replace('USDT','') for p in self.positions[:5]]) or "—"
+        total_pnl = sum(p.get('current_pnl_usd',0) for p in self.positions)
+        color = "#00ff00" if total_pnl >= 0 else "#ff4444"
+        self.status.setText(f"💰 Баланс: {self.balance:.2f}$ | 📈 Позиции: {len(self.positions)}/3 [{pos_sym}] | <span style='color:{color}'>PnL: {total_pnl:+.2f}$</span>")
+        
+        wr = self.stats["wins"] / max(1, self.stats["total_trades"]) * 100
+        self.stats_label.setText(f"📊 Сделок: {self.stats['total_trades']} | Win: {wr:.0f}% | PnL: {self.stats['total_pnl']:+.2f}$ | ❌ Откл: {self.stats['rejected']}")
+    
+    def _reset_balance(self):
+        self.balance = 1000.0
+        self.positions = []
+        self.stats = {"total_trades": 0, "wins": 0, "losses": 0, "total_pnl": 0.0, "rejected": 0}
+        self._save_state()
+        self._render_positions_table()
+        self._update_status()
+        trace("BALANCE RESET")
+
+    def _save_state(self):
+        try:
+            with open(STATE_FILE, "w", encoding="utf-8") as f:
+                json.dump({"balance": self.balance, "positions": self.positions, "stats": self.stats, "last_mtime_ns": self.last_mtime_ns}, f, indent=2)
+        except Exception as e:
+            log_error(f"SAVE: {e}")
+
+    def _load_state(self):
+        try:
+            if os.path.exists(STATE_FILE):
+                with open(STATE_FILE, "r", encoding="utf-8") as f:
+                    st = json.load(f)
+                self.balance = st.get("balance", 1000.0)
+                self.positions = st.get("positions", [])
+                self.stats = st.get("stats", self.stats)
+                self.last_mtime_ns = st.get("last_mtime_ns", 0)
+                self._render_positions_table()
+        except Exception as e:
+            log_error(f"LOAD: {e}")
+
+    def _tick(self):
+        try:
+            if not os.path.exists(BRIDGE_FILE):
+                return
+            st = os.stat(BRIDGE_FILE)
+            if st.st_mtime_ns <= self.last_mtime_ns:
+                return
+            self.last_mtime_ns = st.st_mtime_ns
+            
+            with open(BRIDGE_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            items = data.get("items", [])
+            
+            if len(self.positions) < 3:
+                self._open_new_positions(items)
+            self._save_state()
+            self._update_status()
+        except Exception as e:
+            log_error(f"TICK: {e}")
+
+    def _update_live_data(self):
+        if not self.positions:
+            return
+        try:
+            symbols = [p["symbol"] for p in self.positions]
+            self.current_prices = fetch_prices_batch(symbols)
+            
+            for pos in self.positions:
+                sym = pos["symbol"]
+                entry = pos["entry_price"]
+                current = self.current_prices.get(sym, 0)
+                if entry > 0 and current > 0:
+                    pnl_pct = (entry - current) / entry * 100
+                    pnl_usd = pos["amount_usdt"] * pos["leverage"] * pnl_pct / 100
+                    pos["current_price"] = current
+                    pos["current_pnl_pct"] = pnl_pct
+                    pos["current_pnl_usd"] = pnl_usd
+            
+            self._render_positions_table()
+            self._update_status()
+        except Exception as e:
+            log_error(f"UPDATE: {e}")
+
+    def _render_positions_table(self):
+        self.pos_table.setRowCount(len(self.positions))
+        for i, pos in enumerate(self.positions):
+            pnl_usd = pos.get("current_pnl_usd", 0)
+            color = QColor(0,200,0) if pnl_usd > 0 else QColor(255,80,80) if pnl_usd < 0 else QColor(150,150,150)
+            
+            vals = [
+                pos["symbol"].replace("USDT",""),
+                pos.get("status",""),
+                pos.get("watch_type",""),
+                f"{pos['entry_price']:.6f}",
+                f"{pos.get('current_price',0):.6f}",
+                f"{pos['sl_price']:.6f}",
+                f"{pos['tp1_price']:.6f}",
+                f"{pos.get('current_pnl_pct',0):+.2f}%",
+                f"{pnl_usd:+.2f}$",
+                f"{pos['leverage']:.1f}x",
+                f"{(time.time()-pos['opened_at'])/60:.0f}м"
+            ]
+            for c, v in enumerate(vals):
+                item = QTableWidgetItem(str(v))
+                item.setTextAlignment(Qt.AlignCenter)
+                if c in (7,8):
+                    item.setForeground(color)
+                self.pos_table.setItem(i, c, item)
+
+    def _check_sl_tp_timeout(self):
+        if not self.positions:
+            return
+        now = time.time()
+        to_close = []
+        
+        for pos in self.positions:
+            entry = pos["entry_price"]
+            current = pos.get("current_price", 0) or self.current_prices.get(pos["symbol"], 0)
+            if entry <= 0 or current <= 0:
+                continue
+            
+            pnl_pct = (entry - current) / entry * 100
+            age = now - pos["opened_at"]
+            
+            if current >= pos["sl_price"]:
+                to_close.append((pos, "SL_HIT", current))
+            elif not pos.get("tp1_hit") and current <= pos["tp1_price"]:
+                self._partial_close(pos, 0.5, "TP1_HIT", current)
+                pos["tp1_hit"] = True
+            elif current <= entry * (1 - TP2_PCT/100):
+                to_close.append((pos, "TP2_HIT", current))
+            elif age > TIMEOUT_SEC and abs(pnl_pct) < TIMEOUT_FLAT_PCT:
+                to_close.append((pos, "TIMEOUT", current))
+        
+        for pos, reason, price in to_close:
+            self._close_position(pos, reason, price)
+        if to_close:
+            self._save_state()
+
+    def _partial_close(self, pos, fraction, reason, exit_price):
+        entry = pos["entry_price"]
+        amount = pos["amount_usdt"]
+        close_amt = amount * fraction
+        pos["amount_usdt"] = amount * (1 - fraction)
+        
+        pnl_pct = (entry - exit_price) / entry * 100
+        profit = close_amt * pos["leverage"] * pnl_pct / 100
+        self.balance += profit
+        
+        self.stats["total_trades"] += 1
+        self.stats["total_pnl"] += profit
+        self.stats["wins" if profit > 0 else "losses"] += 1
+        
+        log_decision({"action": "PARTIAL_CLOSE", "symbol": pos["symbol"], "pnl_pct": pnl_pct, "profit": profit, "balance": self.balance, "reason": reason})
+        self._add_history_row(pos, "TP1(50%)", exit_price, pnl_pct, profit, reason)
+        self._update_status()
+
+    def _open_new_positions(self, items):
+        """СТРОГИЙ ФИЛЬТР: вход ТОЛЬКО по Интерес/Готовность/ВХОД"""
+        candidates = [x for x in items if x.get("status") in ENTRY_STATUSES]
+        
+        # Считаем отклонённые
+        rejected = len([x for x in items if x.get("status") and x.get("status") not in ENTRY_STATUSES])
+        self.stats["rejected"] += rejected
+        
+        if not candidates:
+            trace(f"NO_ENTRY: 0 candidates with valid status (rejected {rejected})")
+            return
+        
+        candidates.sort(key=lambda x: float(x.get("score", 0) or 0), reverse=True)
+        slots = 3 - len(self.positions)
+        opened = 0
+        
+        for row in candidates[:slots*2]:
+            if opened >= slots:
+                break
+            sym = row.get("symbol", "")
+            if not sym or any(p["symbol"] == sym for p in self.positions):
+                continue
+            if row.get("status") not in ENTRY_STATUSES:
+                continue
+            if self._open_position(row):
+                opened += 1
+        
+        if opened:
+            trace(f"OPENED {opened}")
+            self._render_positions_table()
+
+    def _open_position(self, row):
+        sym = row.get("symbol", "")
+        status = row.get("status", "")
+        if not sym or status not in ENTRY_STATUSES:
+            return False
+        
+        entry = fetch_last_price(sym)
+        if entry <= 0:
+            return False
+        
+        high = fetch_high_24h(sym) or entry * 1.05
+        lev = calc_adaptive_leverage(entry, high)
+        sl = entry * (1 + SL_PCT/100)
+        tp1 = entry * (1 - TP1_PCT/100)
+        
+        pos = {
+            "symbol": sym, "status": status, "score": float(row.get("score",0) or 0),
+            "watch_type": row.get("watch_type",""), "entry_price": entry, "current_price": entry,
+            "sl_price": sl, "tp1_price": tp1, "tp1_hit": False,
+            "amount_usdt": self.trade_amount, "leverage": lev, "opened_at": time.time(),
+            "current_pnl_pct": 0, "current_pnl_usd": 0
+        }
+        self.positions.append(pos)
+        
+        log_decision({"action": "ENTER_SHORT", "symbol": sym, "status": status, "score": pos["score"], "entry_price": entry, "leverage": lev, "balance": self.balance})
+        self._add_history_row(pos, "🔻 ВХОД", 0, 0, 0, f"✅{status}")
+        trace(f"OPEN {sym} status={status} score={pos['score']:.1f}")
+        return True
+
+    def _close_position(self, pos, reason, exit_price):
+        entry = pos["entry_price"]
+        pnl_pct = (entry - exit_price) / entry * 100
+        profit = pos["amount_usdt"] * pos["leverage"] * pnl_pct / 100
+        self.balance += profit
+        
+        self.stats["total_trades"] += 1
+        self.stats["total_pnl"] += profit
+        self.stats["wins" if profit > 0 else "losses"] += 1
+        
+        log_decision({"action": "CLOSE", "symbol": pos["symbol"], "pnl_pct": pnl_pct, "profit": profit, "balance": self.balance, "reason": reason})
+        
+        emoji = {"SL_HIT": "🛑SL", "TP2_HIT": "🎯TP2", "TIMEOUT": "⏰"}.get(reason, reason)
+        self._add_history_row(pos, "📤 ЗАКРЫТО", exit_price, pnl_pct, profit, emoji)
+        
+        self.positions = [p for p in self.positions if p["symbol"] != pos["symbol"]]
+        self._render_positions_table()
+        self._update_status()
+
+    def _add_history_row(self, pos, action, exit_price, pnl_pct, profit, reason):
+        row = self.hist_table.rowCount()
+        self.hist_table.insertRow(row)
+        
+        color = QColor(100,180,255) if "ВХОД" in action else QColor(0,200,0) if profit > 0 else QColor(255,80,80) if profit < 0 else QColor(150,150,150)
+        
+        vals = [
+            now_str(), pos["symbol"].replace("USDT",""), action, pos.get("status",""),
+            f"{pos.get('score',0):.0f}", pos.get("watch_type",""),
+            f"{pos['entry_price']:.6f}", f"{exit_price:.6f}" if exit_price else "-",
+            f"{pos['leverage']:.1f}x", f"{pnl_pct:+.2f}%" if exit_price else "-",
+            f"{profit:+.2f}$" if exit_price else "-", f"{self.balance:.2f}$", reason
+        ]
+        for c, v in enumerate(vals):
+            item = QTableWidgetItem(str(v))
+            item.setTextAlignment(Qt.AlignCenter)
+            item.setForeground(color)
+            self.hist_table.setItem(row, c, item)
+        self.hist_table.scrollToBottom()
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    app.setStyle('Fusion')
+    palette = QPalette()
+    palette.setColor(QPalette.Window, QColor(15, 15, 35))
+    palette.setColor(QPalette.WindowText, QColor(255, 255, 255))
+    app.setPalette(palette)
+    
+    w = TrainerLive()
+    w.show()
+    sys.exit(app.exec_())

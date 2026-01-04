@@ -1,0 +1,512 @@
+2025-12-31 23:39:56 | RIVERUSDT | Готовность | Памп/Кор | Score: 77 | Entry: 11.391000 | Exit: 11.689000 | Leverage: 17.4x | PnL: -2.62% ($-45.41) | Reason: SL_HIT | Duration: 35m
+2025-12-31 23:40:21 | IPUSDT | Готовность | Рост/Кор | Score: 79 | Entry: 1.704100 | Exit: 1.707900 | Leverage: 20.0x | PnL: -0.22% ($-4.46) | Reason: MANUAL | Duration: 36m
+2025-12-31 23:40:23 | BCHUSDT | Готовность |  | Score: 80 | Entry: 595.600000 | Exit: 596.300000 | Leverage: 20.0x | PnL: -0.12% ($-2.35) | Reason: MANUAL | Duration: 26m
+2025-12-31 23:40:30 | PENDLEUSDT | Готовность |  | Score: 79 | Entry: 1.862700 | Exit: 1.870000 | Leverage: 17.6x | PnL: -0.39% ($-6.88) | Reason: MANUAL | Duration: 26m
+2025-12-31 23:40:40 | MYXUSDT | Готовность | Рост/Кор | Score: 77 | Entry: 3.792800 | Exit: 3.791000 | Leverage: 20.0x | PnL: +0.05% ($+0.95) | Reason: MANUAL_ALL | Duration: 36m
+2025-12-31 23:40:40 | CYBERUSDT | Готовность | Рост/Кор | Score: 86 | Entry: 0.767900 | Exit: 0.755000 | Leverage: 5.0x | PnL: +1.68% ($+4.20) | Reason: MANUAL_ALL | Duration: 27m
+2025-12-31 23:40:40 | STBLUSDT | Готовность | Пл/Пад | Score: 83 | Entry: 0.055310 | Exit: 0.055100 | Leverage: 16.5x | PnL: +0.38% ($+6.27) | Reason: MANUAL_ALL | Duration: 27m
+2025-12-31 23:40:40 | GRIFFAINUSDT | Готовность | Рост/Кор | Score: 83 | Entry: 0.019240 | Exit: 0.019100 | Leverage: 20.0x | PnL: +0.73% ($+14.55) | Reason: MANUAL_ALL | Duration: 27m
+2025-12-31 23:40:40 | MIRAUSDT | Готовность | Пл/Пад | Score: 80 | Entry: 0.149720 | Exit: 0.147710 | Leverage: 20.0x | PnL: +1.34% ($+26.85) | Reason: MANUAL_ALL | Duration: 27m
+2025-12-31 23:40:40 | TONUSDT | Готовность |  | Score: 80 | Entry: 1.632300 | Exit: 1.632300 | Leverage: 20.0x | PnL: +0.00% ($+0.00) | Reason: MANUAL_ALL | Duration: 27m
+2025-12-31 23:40:40 | BNBUSDT | Готовность |  | Score: 80 | Entry: 862.100000 | Exit: 860.700000 | Leverage: 20.0x | PnL: +0.16% ($+3.25) | Reason: MANUAL_ALL | Duration: 27m
+2025-12-31 23:40:40 | ETHUSDT | Готовность |  | Score: 79 | Entry: 2968.280000 | Exit: 2965.010000 | Leverage: 20.0x | PnL: +0.11% ($+2.20) | Reason: MANUAL_ALL | Duration: 27m
+2025-12-31 23:40:40 | SOLUSDT | Готовность |  | Score: 78 | Entry: 124.220000 | Exit: 124.110000 | Leverage: 20.0x | PnL: +0.09% ($+1.77) | Reason: MANUAL_ALL | Duration: 27m
+2025-12-31 23:40:40 | RAVEUSDT | Готовность |  | Score: 76 | Entry: 0.461510 | Exit: 0.460400 | Leverage: 20.0x | PnL: +0.24% ($+4.81) | Reason: MANUAL_ALL | Duration: 27m
+2025-12-31 23:40:40 | CHZUSDT | Готовность | Рост/Кор | Score: 75 | Entry: 0.043360 | Exit: 0.043360 | Leverage: 14.2x | PnL: +0.00% ($+0.00) | Reason: MANUAL_ALL | Duration: 27m
+2025-12-31 23:40:40 | CLOUSDT | Готовность |  | Score: 72 | Entry: 0.393000 | Exit: 0.392300 | Leverage: 16.9x | PnL: +0.18% ($+3.01) | Reason: MANUAL_ALL | Duration: 27m
+2025-12-31 23:40:40 | ESUSDT | Готовность | Рост/Кор | Score: 72 | Entry: 0.103140 | Exit: 0.103140 | Leverage: 12.1x | PnL: +0.00% ($+0.00) | Reason: MANUAL_ALL | Duration: 27m
+2025-12-31 23:40:40 | STABLEUSDT | Готовность | Рост/Кор | Score: 72 | Entry: 0.014314 | Exit: 0.014131 | Leverage: 20.0x | PnL: +1.28% ($+25.57) | Reason: MANUAL_ALL | Duration: 27m
+2025-12-31 23:40:40 | MUSDT | Готовность | Рост/Кор | Score: 71 | Entry: 1.575200 | Exit: 1.574300 | Leverage: 20.0x | PnL: +0.06% ($+1.14) | Reason: MANUAL_ALL | Duration: 27m
+2025-12-31 23:40:40 | LABUSDT | Готовность |  | Score: 65 | Entry: 0.113330 | Exit: 0.112740 | Leverage: 20.0x | PnL: +0.52% ($+10.41) | Reason: MANUAL_ALL | Duration: 27m
+2025-12-31 23:40:40 | ASTERUSDT | Готовность |  | Score: 79 | Entry: 0.694800 | Exit: 0.691100 | Leverage: 20.0x | PnL: +0.53% ($+10.65) | Reason: MANUAL_ALL | Duration: 26m
+2025-12-31 23:40:40 | PUMPFUNUSDT | Готовность | Рост/Кор | Score: 75 | Entry: 0.001927 | Exit: 0.001918 | Leverage: 20.0x | PnL: +0.47% ($+9.34) | Reason: MANUAL_ALL | Duration: 26m
+2025-12-31 23:40:40 | EVAAUSDT | Готовность | Рост/Кор | Score: 89 | Entry: 0.988800 | Exit: 0.977400 | Leverage: 7.4x | PnL: +1.15% ($+8.59) | Reason: MANUAL_ALL | Duration: 13m
+2025-12-31 23:40:40 | AIXBTUSDT | Готовность |  | Score: 59 | Entry: 0.033700 | Exit: 0.033210 | Leverage: 20.0x | PnL: +1.45% ($+29.08) | Reason: MANUAL_ALL | Duration: 13m
+2026-01-01 01:42:38 | LYNUSDT | ВХОД | Памп/Кор | Score: 92 | Entry: 0.161600 | Exit: 0.156200 | Leverage: 18.8x | PnL: +3.34% ($+31.35) | Reason: TP2_HIT | Duration: 89m
+2026-01-01 02:30:12 | LYNUSDT | ВХОД | Рост/Кор | Score: 94 | Entry: 0.160720 | Exit: 0.155750 | Leverage: 16.5x | PnL: +3.09% ($+25.59) | Reason: TP2_HIT | Duration: 37m
+2026-01-01 02:53:59 | STBLUSDT | ВХОД |  | Score: 86 | Entry: 0.056380 | Exit: 0.054490 | Leverage: 20.0x | PnL: +3.35% ($+33.52) | Reason: TP2_HIT | Duration: 113m
+2026-01-01 03:30:24 | AIXBTUSDT | ВХОД | Рост/Кор | Score: 81 | Entry: 0.033380 | Exit: 0.034550 | Leverage: 16.8x | PnL: -3.51% ($-58.87) | Reason: SL_HIT | Duration: 209m
+2026-01-01 03:38:42 | IOSTUSDT | ВХОД | Рост/Кор | Score: 89 | Entry: 0.001828 | Exit: 0.001767 | Leverage: 16.2x | PnL: +3.34% ($+27.11) | Reason: TP2_HIT | Duration: 145m
+2026-01-01 03:55:42 | PUMPFUNUSDT | ВХОД | Рост/Кор | Score: 83 | Entry: 0.001933 | Exit: 0.001949 | Leverage: 20.0x | PnL: -0.83% ($-8.28) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 03:58:08 | ASTERUSDT | ВХОД |  | Score: 86 | Entry: 0.694500 | Exit: 0.694800 | Leverage: 20.0x | PnL: -0.04% ($-0.86) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 04:00:32 | ESUSDT | ВХОД | Памп/Кор | Score: 87 | Entry: 0.107870 | Exit: 0.106220 | Leverage: 20.0x | PnL: +1.53% ($+15.30) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 04:00:32 | MYXUSDT | ВХОД |  | Score: 81 | Entry: 3.811600 | Exit: 3.842000 | Leverage: 20.0x | PnL: -0.80% ($-15.95) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 04:02:54 | POWERUSDT | ВХОД | Рост/Кор | Score: 94 | Entry: 0.354220 | Exit: 0.344680 | Leverage: 20.0x | PnL: +2.69% ($+26.93) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 04:02:54 | STRKUSDT | ВХОД |  | Score: 92 | Entry: 0.079240 | Exit: 0.079090 | Leverage: 20.0x | PnL: +0.19% ($+3.79) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 04:02:54 | CLOUSDT | ВХОД | Памп/Кор | Score: 90 | Entry: 0.395600 | Exit: 0.393800 | Leverage: 19.8x | PnL: +0.46% ($+9.00) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 04:02:54 | IPUSDT | ВХОД | Рост/Кор | Score: 89 | Entry: 1.720300 | Exit: 1.694000 | Leverage: 20.0x | PnL: +1.53% ($+15.29) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 04:12:56 | TONUSDT | ВХОД |  | Score: 85 | Entry: 1.642200 | Exit: 1.670200 | Leverage: 20.0x | PnL: -1.71% ($-34.10) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 04:37:47 | GRIFFAINUSDT | ВХОД | Рост/Кор | Score: 83 | Entry: 0.019170 | Exit: 0.019000 | Leverage: 19.7x | PnL: +0.89% ($+8.72) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 05:02:57 | CAKEUSDT | ВХОД |  | Score: 89 | Entry: 1.896000 | Exit: 1.922000 | Leverage: 20.0x | PnL: -1.37% ($-27.43) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 05:08:33 | AIXBTUSDT | ВХОД | Рост/Кор | Score: 85 | Entry: 0.034260 | Exit: 0.035200 | Leverage: 20.0x | PnL: -2.74% ($-54.87) | Reason: SL_HIT | Duration: 55m
+2026-01-01 05:08:57 | WETUSDT | ВХОД |  | Score: 87 | Entry: 0.177860 | Exit: 0.172500 | Leverage: 20.0x | PnL: +3.01% ($+30.14) | Reason: TP2_HIT | Duration: 55m
+2026-01-01 05:20:33 | AERGOUSDT | ВХОД | Рост/Кор | Score: 100 | Entry: 0.061920 | Exit: 0.060060 | Leverage: 17.4x | PnL: +3.00% ($+26.11) | Reason: TP2_HIT | Duration: 12m
+2026-01-01 05:47:39 | ESUSDT | ВХОД | Памп/Кор | Score: 89 | Entry: 0.106220 | Exit: 0.109170 | Leverage: 20.0x | PnL: -2.78% ($-55.55) | Reason: SL_HIT | Duration: 104m
+2026-01-01 06:01:17 | MUSDT | ВХОД | Рост/Кор | Score: 89 | Entry: 1.572600 | Exit: 1.570300 | Leverage: 20.0x | PnL: +0.15% ($+2.93) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 06:02:09 | CLOUSDT | ВХОД | Памп/Кор | Score: 89 | Entry: 0.393800 | Exit: 0.419200 | Leverage: 17.7x | PnL: -6.45% ($-114.16) | Reason: SL_HIT | Duration: 116m
+2026-01-01 07:06:27 | TRUTHUSDT | ВХОД |  | Score: 87 | Entry: 0.009699 | Exit: 0.009461 | Leverage: 20.0x | PnL: +2.45% ($+24.54) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 07:20:39 | AIXBTUSDT | ВХОД | Рост/Кор | Score: 90 | Entry: 0.035320 | Exit: 0.034180 | Leverage: 20.0x | PnL: +3.23% ($+32.28) | Reason: TP2_HIT | Duration: 17m
+2026-01-01 07:33:49 | SOMIUSDT | ВХОД |  | Score: 92 | Entry: 0.251700 | Exit: 0.245600 | Leverage: 20.0x | PnL: +2.42% ($+24.24) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 08:28:03 | LYNUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.160690 | Exit: 0.155230 | Leverage: 16.5x | PnL: +3.40% ($+28.00) | Reason: TP2_HIT | Duration: 86m
+2026-01-01 08:33:29 | RAVEUSDT | ВХОД | Рост/Кор | Score: 100 | Entry: 0.475230 | Exit: 0.454460 | Leverage: 20.0x | PnL: +4.37% ($+43.71) | Reason: TP2_HIT | Duration: 84m
+2026-01-01 08:51:09 | STBLUSDT | ВХОД |  | Score: 95 | Entry: 0.056870 | Exit: 0.058610 | Leverage: 20.0x | PnL: -3.06% ($-61.19) | Reason: SL_HIT | Duration: 44m
+2026-01-01 08:52:05 | ESUSDT | ВХОД | Памп/Кор | Score: 79 | Entry: 0.108770 | Exit: 0.105500 | Leverage: 16.3x | PnL: +3.01% ($+24.54) | Reason: TP2_HIT | Duration: 73m
+2026-01-01 09:00:57 | FOLKSUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 4.209000 | Exit: 4.153000 | Leverage: 19.2x | PnL: +1.33% ($+12.80) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 09:10:47 | ASTERUSDT | ВХОД |  | Score: 93 | Entry: 0.693400 | Exit: 0.695200 | Leverage: 20.0x | PnL: -0.26% ($-5.19) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 09:10:47 | PUMPFUNUSDT | ВХОД |  | Score: 87 | Entry: 0.001955 | Exit: 0.001948 | Leverage: 20.0x | PnL: +0.36% ($+3.58) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 09:22:51 | BNBUSDT | ВХОД |  | Score: 82 | Entry: 872.000000 | Exit: 863.000000 | Leverage: 20.0x | PnL: +1.03% ($+20.64) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 10:02:51 | POWERUSDT | ВХОД | Рост/Кор | Score: 81 | Entry: 0.352480 | Exit: 0.350720 | Leverage: 18.2x | PnL: +0.50% ($+4.55) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 10:05:23 | USELESSUSDT | ВХОД |  | Score: 95 | Entry: 0.065590 | Exit: 0.064560 | Leverage: 20.0x | PnL: +1.57% ($+15.70) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 10:25:43 | CAKEUSDT | ВХОД |  | Score: 93 | Entry: 1.936000 | Exit: 1.931000 | Leverage: 20.0x | PnL: +0.26% ($+5.17) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 10:33:41 | AERGOUSDT | ВХОД | Рост/Кор | Score: 91 | Entry: 0.062430 | Exit: 0.066070 | Leverage: 20.0x | PnL: -5.83% ($-116.61) | Reason: SL_HIT | Duration: 32m
+2026-01-01 11:06:07 | NOTUSDT | ВХОД |  | Score: 92 | Entry: 0.000518 | Exit: 0.000524 | Leverage: 20.0x | PnL: -1.22% ($-24.32) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 11:33:11 | AIXBTUSDT | ВХОД | Рост/Кор | Score: 89 | Entry: 0.035390 | Exit: 0.036310 | Leverage: 17.4x | PnL: -2.60% ($-45.15) | Reason: SL_HIT | Duration: 29m
+2026-01-01 11:45:31 | STBLUSDT | ВХОД | Рост/Кор | Score: 91 | Entry: 0.057930 | Exit: 0.061040 | Leverage: 20.0x | PnL: -5.37% ($-53.69) | Reason: SL_HIT | Duration: 158m
+2026-01-01 12:00:41 | ZENUSDT | ВХОД |  | Score: 93 | Entry: 9.175000 | Exit: 9.459000 | Leverage: 20.0x | PnL: -3.10% ($-61.91) | Reason: SL_HIT | Duration: 179m
+2026-01-01 12:00:41 | LYNUSDT | ВХОД | Памп/Кор | Score: 92 | Entry: 0.167270 | Exit: 0.173560 | Leverage: 20.0x | PnL: -3.76% ($-37.60) | Reason: SL_HIT | Duration: 115m
+2026-01-01 12:01:09 | XAUTUSDT | ВХОД |  | Score: 82 | Entry: 4337.400000 | Exit: 4332.000000 | Leverage: 20.0x | PnL: +0.12% ($+2.49) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 12:17:47 | LYNUSDT | ВХОД | Памп/Кор | Score: 94 | Entry: 0.171920 | Exit: 0.166550 | Leverage: 20.0x | PnL: +3.12% ($+31.24) | Reason: TP2_HIT | Duration: 9m
+2026-01-01 12:43:13 | LIGHTUSDT | ВХОД | Памп/Кор | Score: 99 | Entry: 2.426200 | Exit: 2.501300 | Leverage: 16.0x | PnL: -3.10% ($-49.65) | Reason: SL_HIT | Duration: 12m
+2026-01-01 12:47:49 | CCUSDT | ВХОД | Рост/Кор | Score: 87 | Entry: 0.162430 | Exit: 0.166820 | Leverage: 20.0x | PnL: -2.70% ($-54.05) | Reason: SL_HIT | Duration: 47m
+2026-01-01 12:53:25 | IPUSDT | ВХОД | Рост/Кор | Score: 89 | Entry: 1.720800 | Exit: 1.809700 | Leverage: 20.0x | PnL: -5.17% ($-103.32) | Reason: SL_HIT | Duration: 112m
+2026-01-01 13:01:35 | PENDLEUSDT | ВХОД |  | Score: 92 | Entry: 1.920200 | Exit: 1.941200 | Leverage: 20.0x | PnL: -1.09% ($-21.87) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 13:07:43 | LIGHTUSDT | ВХОД | Памп/Кор | Score: 95 | Entry: 2.474700 | Exit: 2.389400 | Leverage: 20.0x | PnL: +3.45% ($+34.47) | Reason: TP2_HIT | Duration: 7m
+2026-01-01 13:11:23 | PUMPFUNUSDT | ВХОД |  | Score: 95 | Entry: 0.001948 | Exit: 0.001947 | Leverage: 20.0x | PnL: +0.05% ($+1.03) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 13:29:07 | CAKEUSDT | ВХОД |  | Score: 94 | Entry: 1.931000 | Exit: 1.985000 | Leverage: 20.0x | PnL: -2.80% ($-55.93) | Reason: SL_HIT | Duration: 183m
+2026-01-01 13:29:39 | HOMEUSDT | ВХОД | Памп/Кор | Score: 80 | Entry: 0.021020 | Exit: 0.021680 | Leverage: 20.0x | PnL: -3.14% ($-62.80) | Reason: SL_HIT | Duration: 203m
+2026-01-01 13:30:37 | LYNUSDT | ВХОД | Памп/Кор | Score: 100 | Entry: 0.166910 | Exit: 0.161710 | Leverage: 18.6x | PnL: +3.12% ($+28.97) | Reason: TP2_HIT | Duration: 72m
+2026-01-01 13:46:19 | LIGHTUSDT | ВХОД | Памп/Кор | Score: 79 | Entry: 2.487700 | Exit: 2.637100 | Leverage: 20.0x | PnL: -6.01% ($-60.06) | Reason: SL_HIT | Duration: 27m
+2026-01-01 13:59:05 | ZKUSDT | ВХОД |  | Score: 90 | Entry: 0.029430 | Exit: 0.030180 | Leverage: 20.0x | PnL: -2.55% ($-50.97) | Reason: SL_HIT | Duration: 150m
+2026-01-01 16:43:56 | TONUSDT | ВХОД |  | Score: 93 | Entry: 1.676700 | Exit: 1.682500 | Leverage: 20.0x | PnL: -0.35% ($-6.92) | Reason: TIMEOUT | Duration: 385m
+2026-01-01 16:43:56 | 4USDT | ВХОД | Рост/Кор | Score: 80 | Entry: 0.020620 | Exit: 0.020560 | Leverage: 19.2x | PnL: +0.29% ($+2.79) | Reason: TIMEOUT | Duration: 380m
+2026-01-01 16:43:56 | ASTERUSDT | ВХОД |  | Score: 91 | Entry: 0.693200 | Exit: 0.695100 | Leverage: 20.0x | PnL: -0.27% ($-5.48) | Reason: TIMEOUT | Duration: 342m
+2026-01-01 16:43:56 | OPUSDT | ВХОД |  | Score: 85 | Entry: 0.269800 | Exit: 0.273900 | Leverage: 20.0x | PnL: -1.52% ($-30.39) | Reason: TIMEOUT | Duration: 342m
+2026-01-01 16:43:56 | 2ZUSDT | ВХОД |  | Score: 92 | Entry: 0.123200 | Exit: 0.122760 | Leverage: 20.0x | PnL: +0.36% ($+7.14) | Reason: TIMEOUT | Duration: 340m
+2026-01-01 16:43:56 | USELESSUSDT | ВХОД |  | Score: 90 | Entry: 0.064920 | Exit: 0.066220 | Leverage: 20.0x | PnL: -2.00% ($-40.05) | Reason: TIMEOUT | Duration: 340m
+2026-01-01 16:43:56 | NEARUSDT | ВХОД |  | Score: 88 | Entry: 1.511500 | Exit: 1.520000 | Leverage: 20.0x | PnL: -0.56% ($-11.25) | Reason: TIMEOUT | Duration: 340m
+2026-01-01 16:43:56 | NOTUSDT | ВХОД |  | Score: 95 | Entry: 0.000522 | Exit: 0.000533 | Leverage: 20.0x | PnL: -1.95% ($-39.05) | Reason: TIMEOUT | Duration: 330m
+2026-01-01 16:43:56 | PNUTUSDT | ВХОД |  | Score: 92 | Entry: 0.070050 | Exit: 0.070370 | Leverage: 20.0x | PnL: -0.46% ($-9.14) | Reason: TIMEOUT | Duration: 330m
+2026-01-01 16:43:56 | WLFIUSDT | ВХОД |  | Score: 95 | Entry: 0.144630 | Exit: 0.145480 | Leverage: 20.0x | PnL: -0.59% ($-11.75) | Reason: TIMEOUT | Duration: 328m
+2026-01-01 16:43:56 | ORDIUSDT | ВХОД |  | Score: 85 | Entry: 4.265000 | Exit: 4.329000 | Leverage: 20.0x | PnL: -1.50% ($-30.01) | Reason: TIMEOUT | Duration: 328m
+2026-01-01 16:43:56 | GALAUSDT | ВХОД |  | Score: 90 | Entry: 0.005906 | Exit: 0.005976 | Leverage: 20.0x | PnL: -1.19% ($-23.70) | Reason: TIMEOUT | Duration: 325m
+2026-01-01 16:43:56 | STBLUSDT | ВХОД | Рост/Кор | Score: 92 | Entry: 0.061030 | Exit: 0.061130 | Leverage: 20.0x | PnL: -0.16% ($-3.28) | Reason: TIMEOUT | Duration: 275m
+2026-01-01 16:43:56 | STABLEUSDT | ВХОД | Рост/Кор | Score: 86 | Entry: 0.014559 | Exit: 0.014609 | Leverage: 20.0x | PnL: -0.34% ($-3.43) | Reason: TIMEOUT | Duration: 275m
+2026-01-01 16:43:56 | MUSDT | ВХОД |  | Score: 95 | Entry: 1.618200 | Exit: 1.706100 | Leverage: 20.0x | PnL: -5.43% ($-54.32) | Reason: SL_HIT | Duration: 261m
+2026-01-01 16:43:56 | ZENUSDT | ВХОД |  | Score: 84 | Entry: 9.489000 | Exit: 9.677000 | Leverage: 20.0x | PnL: -1.98% ($-39.62) | Reason: TIMEOUT | Duration: 253m
+2026-01-01 16:53:06 | PUMPFUNUSDT | ВХОД |  | Score: 93 | Entry: 0.001947 | Exit: 0.002052 | Leverage: 20.0x | PnL: -5.39% ($-107.86) | Reason: SL_HIT | Duration: 219m
+2026-01-01 17:00:37 | BOMEUSDT | ВХОД |  | Score: 86 | Entry: 0.000555 | Exit: 0.000554 | Leverage: 20.0x | PnL: +0.14% ($+2.88) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 17:03:15 | PENDLEUSDT | ВХОД |  | Score: 92 | Entry: 1.941200 | Exit: 1.935300 | Leverage: 20.0x | PnL: +0.30% ($+6.08) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 17:08:29 | LINEAUSDT | ВХОД |  | Score: 92 | Entry: 0.006447 | Exit: 0.006547 | Leverage: 20.0x | PnL: -1.55% ($-31.02) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 17:52:40 | ICPUSDT | ВХОД |  | Score: 92 | Entry: 2.922000 | Exit: 2.997000 | Leverage: 20.0x | PnL: -2.57% ($-51.33) | Reason: SL_HIT | Duration: 49m
+2026-01-01 19:49:32 | RECALLUSDT | ВХОД |  | Score: 90 | Entry: 0.111880 | Exit: 0.107800 | Leverage: 20.0x | PnL: +3.65% ($+36.47) | Reason: TP2_HIT | Duration: 166m
+2026-01-01 19:49:52 | ZENUSDT | ВХОД | Рост/Кор | Score: 100 | Entry: 9.677000 | Exit: 9.308000 | Leverage: 19.4x | PnL: +3.81% ($+36.90) | Reason: TP2_HIT | Duration: 185m
+2026-01-01 20:16:56 | NEARUSDT | ВХОД |  | Score: 95 | Entry: 1.543000 | Exit: 1.584500 | Leverage: 20.0x | PnL: -2.69% ($-53.79) | Reason: SL_HIT | Duration: 194m
+2026-01-01 20:44:22 | CYSUSDT | ВХОД | Памп/Кор | Score: 81 | Entry: 0.357700 | Exit: 0.339600 | Leverage: 17.8x | PnL: +5.06% ($+44.97) | Reason: TP2_HIT | Duration: 123m
+2026-01-01 20:45:44 | LITUSDT | ВХОД |  | Score: 95 | Entry: 2.601600 | Exit: 2.701700 | Leverage: 17.2x | PnL: -3.85% ($-66.29) | Reason: SL_HIT | Duration: 67m
+2026-01-01 20:45:52 | BERAUSDT | ВХОД |  | Score: 93 | Entry: 0.636200 | Exit: 0.653700 | Leverage: 20.0x | PnL: -2.75% ($-55.01) | Reason: SL_HIT | Duration: 217m
+2026-01-01 20:46:12 | 1000PEPEUSDT | ВХОД |  | Score: 93 | Entry: 0.004165 | Exit: 0.004468 | Leverage: 20.0x | PnL: -7.27% ($-145.50) | Reason: SL_HIT | Duration: 223m
+2026-01-01 20:46:12 | ADAUSDT | ВХОД |  | Score: 85 | Entry: 0.343100 | Exit: 0.352400 | Leverage: 20.0x | PnL: -2.71% ($-54.21) | Reason: SL_HIT | Duration: 160m
+2026-01-01 20:46:20 | BOMEUSDT | ВХОД |  | Score: 94 | Entry: 0.000554 | Exit: 0.000577 | Leverage: 20.0x | PnL: -4.10% ($-81.93) | Reason: SL_HIT | Duration: 223m
+2026-01-01 20:46:20 | COOKIEUSDT | ВХОД | Рост/Кор | Score: 86 | Entry: 0.043360 | Exit: 0.044540 | Leverage: 18.8x | PnL: -2.72% ($-51.03) | Reason: SL_HIT | Duration: 103m
+2026-01-01 20:46:28 | ENAUSDT | ВХОД |  | Score: 92 | Entry: 0.205300 | Exit: 0.211800 | Leverage: 20.0x | PnL: -3.17% ($-63.32) | Reason: SL_HIT | Duration: 218m
+2026-01-01 20:46:58 | SHIB1000USDT | ВХОД |  | Score: 83 | Entry: 0.007063 | Exit: 0.007290 | Leverage: 20.0x | PnL: -3.21% ($-64.28) | Reason: SL_HIT | Duration: 218m
+2026-01-01 21:02:48 | PNUTUSDT | ВХОД |  | Score: 93 | Entry: 0.070620 | Exit: 0.071370 | Leverage: 20.0x | PnL: -1.06% ($-21.24) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 21:02:48 | ASTERUSDT | ВХОД |  | Score: 92 | Entry: 0.697800 | Exit: 0.704900 | Leverage: 20.0x | PnL: -1.02% ($-20.35) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 21:02:48 | XPLUSDT | ВХОД |  | Score: 92 | Entry: 0.171410 | Exit: 0.171860 | Leverage: 20.0x | PnL: -0.26% ($-5.25) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 21:05:32 | PENDLEUSDT | ВХОД |  | Score: 95 | Entry: 1.934100 | Exit: 1.945300 | Leverage: 20.0x | PnL: -0.58% ($-11.58) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 21:08:14 | TAOUSDT | ВХОД |  | Score: 92 | Entry: 223.950000 | Exit: 226.110000 | Leverage: 20.0x | PnL: -0.96% ($-19.29) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 21:11:00 | LINEAUSDT | ВХОД |  | Score: 93 | Entry: 0.006547 | Exit: 0.006628 | Leverage: 20.0x | PnL: -1.24% ($-24.74) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 21:18:20 | CAKEUSDT | ВХОД |  | Score: 83 | Entry: 1.978000 | Exit: 1.975000 | Leverage: 20.0x | PnL: +0.15% ($+3.03) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 21:21:04 | DYDXUSDT | ВХОД |  | Score: 83 | Entry: 0.178300 | Exit: 0.180500 | Leverage: 20.0x | PnL: -1.23% ($-24.68) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 21:22:48 | JTOUSDT | ВХОД |  | Score: 79 | Entry: 0.400100 | Exit: 0.406600 | Leverage: 20.0x | PnL: -1.62% ($-32.49) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 21:46:12 | NOTUSDT | ВХОД |  | Score: 90 | Entry: 0.000542 | Exit: 0.000561 | Leverage: 20.0x | PnL: -3.37% ($-67.49) | Reason: SL_HIT | Duration: 198m
+2026-01-01 21:50:00 | LYNUSDT | ВХОД |  | Score: 81 | Entry: 0.168350 | Exit: 0.162990 | Leverage: 20.0x | PnL: +3.18% ($+31.84) | Reason: TP2_HIT | Duration: 40m
+2026-01-01 22:01:20 | MEMEUSDT | ВХОД | Пл/Пад | Score: 95 | Entry: 0.001033 | Exit: 0.001044 | Leverage: 20.0x | PnL: -1.06% ($-21.29) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 22:01:20 | 1000FLOKIUSDT | ВХОД |  | Score: 85 | Entry: 0.040010 | Exit: 0.040340 | Leverage: 20.0x | PnL: -0.82% ($-16.50) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 22:02:56 | ICPUSDT | ВХОД | Рост/Кор | Score: 89 | Entry: 2.989000 | Exit: 3.031000 | Leverage: 20.0x | PnL: -1.41% ($-28.10) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 22:05:40 | ETCUSDT | ВХОД |  | Score: 93 | Entry: 11.735000 | Exit: 11.933000 | Leverage: 20.0x | PnL: -1.69% ($-33.75) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 22:05:40 | LDOUSDT | ВХОД |  | Score: 92 | Entry: 0.592500 | Exit: 0.599400 | Leverage: 20.0x | PnL: -1.16% ($-23.29) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 22:05:40 | XLMUSDT | ВХОД |  | Score: 85 | Entry: 0.205220 | Exit: 0.206650 | Leverage: 20.0x | PnL: -0.70% ($-13.94) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 22:15:14 | WLFIUSDT | ВХОД |  | Score: 92 | Entry: 0.145440 | Exit: 0.146200 | Leverage: 20.0x | PnL: -0.52% ($-10.45) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 22:40:22 | MOVEUSDT | ВХОД |  | Score: 92 | Entry: 0.034470 | Exit: 0.034540 | Leverage: 20.0x | PnL: -0.20% ($-4.06) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 22:45:22 | LITUSDT | ВХОД | Рост/Кор | Score: 86 | Entry: 2.711600 | Exit: 2.785200 | Leverage: 20.0x | PnL: -2.71% ($-54.29) | Reason: SL_HIT | Duration: 81m
+2026-01-01 22:46:06 | FARTCOINUSDT | ВХОД |  | Score: 95 | Entry: 0.275300 | Exit: 0.285200 | Leverage: 20.0x | PnL: -3.60% ($-71.92) | Reason: SL_HIT | Duration: 198m
+2026-01-01 22:46:50 | MONUSDT | ВХОД |  | Score: 84 | Entry: 0.023381 | Exit: 0.023978 | Leverage: 20.0x | PnL: -2.55% ($-51.07) | Reason: SL_HIT | Duration: 97m
+2026-01-01 23:02:42 | MNTUSDT | ВХОД |  | Score: 89 | Entry: 0.964400 | Exit: 0.967100 | Leverage: 20.0x | PnL: -0.28% ($-5.60) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 23:02:42 | KAITOUSDT | ВХОД |  | Score: 88 | Entry: 0.514200 | Exit: 0.517500 | Leverage: 20.0x | PnL: -0.64% ($-12.84) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 23:02:42 | ZKUSDT | ВХОД |  | Score: 87 | Entry: 0.030250 | Exit: 0.030380 | Leverage: 20.0x | PnL: -0.43% ($-8.60) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 23:02:42 | ETHUSDT | ВХОД |  | Score: 85 | Entry: 2987.530000 | Exit: 2993.820000 | Leverage: 20.0x | PnL: -0.21% ($-4.21) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 23:02:42 | BTCUSDT | ВХОД |  | Score: 83 | Entry: 87958.900000 | Exit: 88323.100000 | Leverage: 20.0x | PnL: -0.41% ($-8.28) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 23:12:36 | CRVUSDT | ВХОД | Пл/Пад | Score: 95 | Entry: 0.381400 | Exit: 0.385100 | Leverage: 20.0x | PnL: -0.97% ($-19.40) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 23:12:36 | IOUSDT | ВХОД |  | Score: 95 | Entry: 0.155240 | Exit: 0.156400 | Leverage: 20.0x | PnL: -0.75% ($-14.94) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 23:12:36 | TONUSDT | ВХОД |  | Score: 93 | Entry: 1.680900 | Exit: 1.694500 | Leverage: 20.0x | PnL: -0.81% ($-16.18) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 23:12:36 | 2ZUSDT | ВХОД |  | Score: 89 | Entry: 0.124320 | Exit: 0.124190 | Leverage: 20.0x | PnL: +0.10% ($+2.09) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 23:12:36 | POLUSDT | ВХОД |  | Score: 85 | Entry: 0.102930 | Exit: 0.104350 | Leverage: 20.0x | PnL: -1.38% ($-27.59) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 23:15:04 | XRPUSDT | ВХОД |  | Score: 92 | Entry: 1.859100 | Exit: 1.872000 | Leverage: 20.0x | PnL: -0.69% ($-13.88) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 23:16:04 | HBARUSDT | ВХОД |  | Score: 86 | Entry: 0.110430 | Exit: 0.113450 | Leverage: 20.0x | PnL: -2.73% ($-54.70) | Reason: SL_HIT | Duration: 194m
+2026-01-01 23:24:54 | SANDUSDT | ВХОД |  | Score: 93 | Entry: 0.112020 | Exit: 0.112910 | Leverage: 20.0x | PnL: -0.79% ($-15.89) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 23:24:54 | AXLUSDT | ВХОД |  | Score: 92 | Entry: 0.070180 | Exit: 0.071410 | Leverage: 20.0x | PnL: -1.75% ($-35.05) | Reason: TIMEOUT | Duration: 240m
+2026-01-01 23:27:22 | DOGEUSDT | ВХОД |  | Score: 88 | Entry: 0.124360 | Exit: 0.125910 | Leverage: 20.0x | PnL: -1.25% ($-24.93) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 00:00:26 | GRTUSDT | ВХОД |  | Score: 93 | Entry: 0.035230 | Exit: 0.035710 | Leverage: 20.0x | PnL: -1.36% ($-27.25) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 00:00:56 | VIRTUALUSDT | ВХОД |  | Score: 95 | Entry: 0.675500 | Exit: 0.682600 | Leverage: 20.0x | PnL: -1.05% ($-21.02) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 00:01:48 | GIGGLEUSDT | ВХОД |  | Score: 95 | Entry: 67.250000 | Exit: 67.370000 | Leverage: 20.0x | PnL: -0.18% ($-3.57) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 00:01:48 | 0GUSDT | ВХОД |  | Score: 93 | Entry: 0.981700 | Exit: 0.975700 | Leverage: 20.0x | PnL: +0.61% ($+12.22) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 00:01:48 | LINKUSDT | ВХОД |  | Score: 87 | Entry: 12.357000 | Exit: 12.490000 | Leverage: 20.0x | PnL: -1.08% ($-21.53) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 00:01:48 | 4USDT | ВХОД | Памп/Кор | Score: 86 | Entry: 0.021470 | Exit: 0.021410 | Leverage: 20.0x | PnL: +0.28% ($+5.59) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 00:20:00 | LITUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 2.745300 | Exit: 2.662100 | Leverage: 20.0x | PnL: +3.03% ($+30.31) | Reason: TP2_HIT | Duration: 79m
+2026-01-02 00:30:22 | USELESSUSDT | ВХОД | Памп/Кор | Score: 85 | Entry: 0.078610 | Exit: 0.075760 | Leverage: 20.0x | PnL: +3.63% ($+36.25) | Reason: TP2_HIT | Duration: 62m
+2026-01-02 00:44:22 | COMPUSDT | ВХОД |  | Score: 95 | Entry: 25.240000 | Exit: 25.210000 | Leverage: 20.0x | PnL: +0.12% ($+2.38) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 00:44:24 | PIEVERSEUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.523900 | Exit: 0.524600 | Leverage: 16.4x | PnL: -0.13% ($-2.20) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 00:58:10 | LQTYUSDT | ВХОД |  | Score: 93 | Entry: 0.390100 | Exit: 0.390300 | Leverage: 20.0x | PnL: -0.05% ($-1.03) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 01:01:08 | OMUSDT | ВХОД |  | Score: 94 | Entry: 0.072750 | Exit: 0.073010 | Leverage: 20.0x | PnL: -0.36% ($-7.15) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 01:02:00 | MYXUSDT | ВХОД |  | Score: 88 | Entry: 3.959500 | Exit: 3.900800 | Leverage: 20.0x | PnL: +1.48% ($+29.65) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 01:02:22 | GRIFFAINUSDT | ВХОД | Рост/Кор | Score: 94 | Entry: 0.020570 | Exit: 0.021100 | Leverage: 20.0x | PnL: -2.58% ($-51.53) | Reason: SL_HIT | Duration: 115m
+2026-01-02 01:03:04 | MINAUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.079120 | Exit: 0.078680 | Leverage: 20.0x | PnL: +0.56% ($+11.12) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 01:04:28 | COAIUSDT | ВХОД |  | Score: 90 | Entry: 0.410600 | Exit: 0.411400 | Leverage: 20.0x | PnL: -0.19% ($-3.90) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 01:08:22 | TAOUSDT | ВХОД |  | Score: 92 | Entry: 226.110000 | Exit: 226.570000 | Leverage: 20.0x | PnL: -0.20% ($-4.07) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 01:09:26 | XPLUSDT | ВХОД |  | Score: 95 | Entry: 0.170880 | Exit: 0.170540 | Leverage: 20.0x | PnL: +0.20% ($+3.98) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 01:21:12 | DYDXUSDT | ВХОД |  | Score: 89 | Entry: 0.180500 | Exit: 0.182400 | Leverage: 20.0x | PnL: -1.05% ($-21.05) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 01:29:36 | VANAUSDT | ВХОД |  | Score: 92 | Entry: 2.306000 | Exit: 2.305000 | Leverage: 20.0x | PnL: +0.04% ($+0.87) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 01:45:06 | SOONUSDT | ВХОД | Рост/Кор | Score: 80 | Entry: 0.378400 | Exit: 0.366500 | Leverage: 16.1x | PnL: +3.14% ($+25.32) | Reason: TP2_HIT | Duration: 210m
+2026-01-02 01:52:22 | ASTERUSDT | ВХОД |  | Score: 91 | Entry: 0.703700 | Exit: 0.707400 | Leverage: 20.0x | PnL: -0.53% ($-10.52) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 02:00:42 | TIAUSDT | ВХОД | Рост/Кор | Score: 93 | Entry: 0.492300 | Exit: 0.499800 | Leverage: 20.0x | PnL: -1.52% ($-30.47) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 02:02:44 | PENGUUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.009201 | Exit: 0.009439 | Leverage: 20.0x | PnL: -2.59% ($-51.73) | Reason: SL_HIT | Duration: 61m
+2026-01-02 02:05:06 | EIGENUSDT | ВХОД |  | Score: 91 | Entry: 0.362900 | Exit: 0.372800 | Leverage: 20.0x | PnL: -2.73% ($-54.56) | Reason: SL_HIT | Duration: 230m
+2026-01-02 02:12:22 | ICPUSDT | ВХОД | Рост/Кор | Score: 92 | Entry: 3.036000 | Exit: 3.002000 | Leverage: 20.0x | PnL: +1.12% ($+11.20) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 02:14:50 | SOLUSDT | ВХОД |  | Score: 92 | Entry: 125.180000 | Exit: 125.630000 | Leverage: 20.0x | PnL: -0.36% ($-7.19) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 02:18:08 | ALTUSDT | ВХОД | Рост/Кор | Score: 92 | Entry: 0.012451 | Exit: 0.012481 | Leverage: 20.0x | PnL: -0.24% ($-4.82) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 02:18:34 | PUMPFUNUSDT | ВХОД | Рост/Кор | Score: 90 | Entry: 0.002048 | Exit: 0.002083 | Leverage: 20.0x | PnL: -1.71% ($-34.18) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 03:00:54 | PNUTUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.073070 | Exit: 0.076190 | Leverage: 20.0x | PnL: -4.27% ($-85.40) | Reason: SL_HIT | Duration: 136m
+2026-01-02 03:01:56 | PEOPLEUSDT | ВХОД | Рост/Кор | Score: 87 | Entry: 0.010187 | Exit: 0.010233 | Leverage: 20.0x | PnL: -0.45% ($-9.03) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 03:01:56 | TRUTHUSDT | ВХОД |  | Score: 81 | Entry: 0.009855 | Exit: 0.009781 | Leverage: 20.0x | PnL: +0.75% ($+7.51) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 03:02:48 | ZKUSDT | ВХОД |  | Score: 95 | Entry: 0.030380 | Exit: 0.030810 | Leverage: 20.0x | PnL: -1.42% ($-28.31) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 03:02:48 | BTCUSDT | ВХОД |  | Score: 94 | Entry: 88323.100000 | Exit: 88572.900000 | Leverage: 20.0x | PnL: -0.28% ($-5.66) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 03:02:48 | KAITOUSDT | ВХОД |  | Score: 90 | Entry: 0.517500 | Exit: 0.518000 | Leverage: 20.0x | PnL: -0.10% ($-1.93) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 03:04:32 | SNXUSDT | ВХОД | Рост/Кор | Score: 88 | Entry: 0.442200 | Exit: 0.447900 | Leverage: 17.1x | PnL: -1.29% ($-22.03) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 03:04:32 | ETHUSDT | ВХОД |  | Score: 82 | Entry: 2993.820000 | Exit: 2994.850000 | Leverage: 20.0x | PnL: -0.03% ($-0.69) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 03:07:08 | ORDIUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 4.522000 | Exit: 4.513000 | Leverage: 20.0x | PnL: +0.20% ($+3.98) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 03:12:38 | CRVUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.385100 | Exit: 0.390600 | Leverage: 20.0x | PnL: -1.43% ($-28.56) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 03:15:06 | IMXUSDT | ВХОД |  | Score: 84 | Entry: 0.241100 | Exit: 0.250900 | Leverage: 20.0x | PnL: -4.06% ($-81.29) | Reason: SL_HIT | Duration: 192m
+2026-01-02 03:19:58 | FILUSDT | ВХОД | Памп/Кор | Score: 95 | Entry: 1.507100 | Exit: 1.483700 | Leverage: 20.0x | PnL: +1.55% ($+15.53) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 03:27:38 | IOUSDT | ВХОД |  | Score: 93 | Entry: 0.156260 | Exit: 0.159550 | Leverage: 20.0x | PnL: -2.11% ($-42.11) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 03:27:38 | SUSDT | ВХОД | Рост/Кор | Score: 93 | Entry: 0.079100 | Exit: 0.080320 | Leverage: 20.0x | PnL: -1.54% ($-30.85) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 03:38:06 | DOGEUSDT | ВХОД | Рост/Кор | Score: 86 | Entry: 0.125740 | Exit: 0.126150 | Leverage: 20.0x | PnL: -0.33% ($-6.52) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 04:00:36 | STBLUSDT | ВХОД | Памп/Кор | Score: 95 | Entry: 0.064240 | Exit: 0.064310 | Leverage: 19.4x | PnL: -0.11% ($-1.06) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 04:01:00 | VIRTUALUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.682600 | Exit: 0.693300 | Leverage: 20.0x | PnL: -1.57% ($-31.35) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 04:01:54 | 4USDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.021410 | Exit: 0.021510 | Leverage: 20.0x | PnL: -0.47% ($-9.34) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 04:02:56 | LINKUSDT | ВХОД |  | Score: 92 | Entry: 12.475000 | Exit: 12.598000 | Leverage: 20.0x | PnL: -0.99% ($-19.72) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 04:02:56 | TONUSDT | ВХОД |  | Score: 91 | Entry: 1.693100 | Exit: 1.685900 | Leverage: 20.0x | PnL: +0.43% ($+8.51) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 04:02:56 | LINEAUSDT | ВХОД | Рост/Кор | Score: 89 | Entry: 0.006691 | Exit: 0.006675 | Leverage: 20.0x | PnL: +0.24% ($+4.78) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 04:02:56 | TRXUSDT | ВХОД |  | Score: 87 | Entry: 0.284890 | Exit: 0.286190 | Leverage: 20.0x | PnL: -0.46% ($-9.13) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 04:02:56 | EGLDUSDT | ВХОД | Рост/Кор | Score: 85 | Entry: 5.837000 | Exit: 5.834000 | Leverage: 20.0x | PnL: +0.05% ($+1.03) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 04:02:56 | STRKUSDT | ВХОД |  | Score: 85 | Entry: 0.081400 | Exit: 0.082030 | Leverage: 20.0x | PnL: -0.77% ($-15.48) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 04:02:56 | ETHFIUSDT | ВХОД | Рост/Кор | Score: 84 | Entry: 0.725600 | Exit: 0.734800 | Leverage: 20.0x | PnL: -1.27% ($-25.36) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 04:05:04 | LDOUSDT | ВХОД |  | Score: 93 | Entry: 0.604800 | Exit: 0.606200 | Leverage: 20.0x | PnL: -0.23% ($-4.63) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 04:05:04 | TUTUSDT | ВХОД | Памп/Кор | Score: 92 | Entry: 0.016965 | Exit: 0.016611 | Leverage: 16.6x | PnL: +2.09% ($+17.31) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 04:05:04 | ENSUSDT | ВХОД |  | Score: 90 | Entry: 9.706000 | Exit: 9.718000 | Leverage: 20.0x | PnL: -0.12% ($-2.47) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 04:05:04 | INJUSDT | ВХОД |  | Score: 90 | Entry: 4.471000 | Exit: 4.522000 | Leverage: 20.0x | PnL: -1.14% ($-22.81) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 04:20:04 | ETCUSDT | ВХОД |  | Score: 95 | Entry: 12.027000 | Exit: 11.985000 | Leverage: 20.0x | PnL: +0.35% ($+6.98) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 04:30:28 | GRTUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.035700 | Exit: 0.035790 | Leverage: 20.0x | PnL: -0.25% ($-5.04) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 04:44:24 | HNTUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 1.510200 | Exit: 1.518900 | Leverage: 20.0x | PnL: -0.58% ($-11.52) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 04:58:12 | RENDERUSDT | ВХОД | Рост/Кор | Score: 93 | Entry: 1.355800 | Exit: 1.367500 | Leverage: 20.0x | PnL: -0.86% ($-17.26) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 05:02:50 | FARTCOINUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.284400 | Exit: 0.285500 | Leverage: 20.0x | PnL: -0.39% ($-7.74) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 05:02:50 | GRIFFAINUSDT | ВХОД | Рост/Кор | Score: 86 | Entry: 0.021100 | Exit: 0.021450 | Leverage: 20.0x | PnL: -1.66% ($-33.18) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 05:05:01 | SYRUPUSDT | ВХОД | Рост/Кор | Score: 90 | Entry: 0.365240 | Exit: 0.367380 | Leverage: 20.0x | PnL: -0.59% ($-11.72) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 05:12:45 | NOTUSDT | ВХОД | Рост/Кор | Score: 90 | Entry: 0.000565 | Exit: 0.000567 | Leverage: 20.0x | PnL: -0.27% ($-5.31) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 05:12:57 | RESOLVUSDT | ВХОД |  | Score: 95 | Entry: 0.069680 | Exit: 0.069780 | Leverage: 20.0x | PnL: -0.14% ($-2.87) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 05:13:49 | MINAUSDT | ВХОД |  | Score: 95 | Entry: 0.078630 | Exit: 0.078910 | Leverage: 20.0x | PnL: -0.36% ($-7.12) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 05:21:19 | POPCATUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.081200 | Exit: 0.082980 | Leverage: 20.0x | PnL: -2.19% ($-43.84) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 05:30:23 | DYDXUSDT | ВХОД |  | Score: 91 | Entry: 0.182400 | Exit: 0.182100 | Leverage: 20.0x | PnL: +0.16% ($+3.29) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 06:02:45 | TIAUSDT | ВХОД | Рост/Кор | Score: 94 | Entry: 0.499800 | Exit: 0.496300 | Leverage: 20.0x | PnL: +0.70% ($+14.01) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 06:02:45 | APTUSDT | ВХОД | Рост/Кор | Score: 93 | Entry: 1.855000 | Exit: 1.842000 | Leverage: 20.0x | PnL: +0.70% ($+14.02) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 06:02:45 | AEROUSDT | ВХОД | Памп/Кор | Score: 92 | Entry: 0.467600 | Exit: 0.471200 | Leverage: 20.0x | PnL: -0.77% ($-15.40) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 06:02:51 | CROUSDT | ВХОД |  | Score: 95 | Entry: 0.093270 | Exit: 0.093190 | Leverage: 20.0x | PnL: +0.09% ($+1.72) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 06:05:13 | ADAUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.357200 | Exit: 0.356500 | Leverage: 20.0x | PnL: +0.20% ($+3.92) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 06:12:25 | LITUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 2.674700 | Exit: 2.622900 | Leverage: 17.1x | PnL: +1.94% ($+16.54) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 06:14:53 | RVNUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.007498 | Exit: 0.007552 | Leverage: 20.0x | PnL: -0.72% ($-14.40) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 06:18:15 | AXSUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.871300 | Exit: 0.878000 | Leverage: 20.0x | PnL: -0.77% ($-15.38) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 06:18:39 | PYTHUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.061990 | Exit: 0.061210 | Leverage: 20.0x | PnL: +1.26% ($+25.17) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 06:46:07 | 1000000MOGUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.245200 | Exit: 0.251500 | Leverage: 20.0x | PnL: -2.57% ($-51.39) | Reason: SL_HIT | Duration: 165m
+2026-01-02 06:46:07 | 1000BONKUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.008154 | Exit: 0.008365 | Leverage: 20.0x | PnL: -2.59% ($-51.75) | Reason: SL_HIT | Duration: 43m
+2026-01-02 06:46:41 | 1000TURBOUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 1.730000 | Exit: 1.781400 | Leverage: 20.0x | PnL: -2.97% ($-59.42) | Reason: SL_HIT | Duration: 161m
+2026-01-02 06:46:53 | JASMYUSDT | ВХОД |  | Score: 95 | Entry: 0.005870 | Exit: 0.006032 | Leverage: 20.0x | PnL: -2.76% ($-55.20) | Reason: SL_HIT | Duration: 163m
+2026-01-02 07:01:01 | ALTUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.012454 | Exit: 0.012540 | Leverage: 20.0x | PnL: -0.69% ($-13.81) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 07:02:03 | BATUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.221300 | Exit: 0.222300 | Leverage: 20.0x | PnL: -0.45% ($-9.04) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 07:02:03 | COAIUSDT | ВХОД |  | Score: 95 | Entry: 0.414000 | Exit: 0.412600 | Leverage: 20.0x | PnL: +0.34% ($+6.76) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 07:02:45 | PNUTUSDT | ВХОД | Рост/Кор | Score: 93 | Entry: 0.076190 | Exit: 0.078860 | Leverage: 20.0x | PnL: -3.50% ($-70.09) | Reason: SL_HIT | Duration: 239m
+2026-01-02 07:02:57 | COOKIEUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.045380 | Exit: 0.044610 | Leverage: 20.0x | PnL: +1.70% ($+16.97) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 07:02:57 | SEIUSDT | ВХОД |  | Score: 95 | Entry: 0.116130 | Exit: 0.115830 | Leverage: 20.0x | PnL: +0.26% ($+5.17) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 07:05:03 | XAIUSDT | ВХОД | Рост/Кор | Score: 93 | Entry: 0.017060 | Exit: 0.016910 | Leverage: 20.0x | PnL: +0.88% ($+17.58) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 07:05:03 | ALGOUSDT | ВХОД | Рост/Кор | Score: 92 | Entry: 0.120000 | Exit: 0.122110 | Leverage: 20.0x | PnL: -1.76% ($-35.17) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 07:07:35 | 1000FLOKIUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.043900 | Exit: 0.044650 | Leverage: 20.0x | PnL: -1.71% ($-34.17) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 07:12:43 | BERAUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.657300 | Exit: 0.661100 | Leverage: 20.0x | PnL: -0.58% ($-11.56) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 07:12:45 | ATOMUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 2.059000 | Exit: 2.111000 | Leverage: 20.0x | PnL: -2.53% ($-50.51) | Reason: SL_HIT | Duration: 189m
+2026-01-02 07:15:13 | 1000PEPEUSDT | ВХОД | Памп/Кор | Score: 95 | Entry: 0.004899 | Exit: 0.004941 | Leverage: 20.0x | PnL: -0.86% ($-8.57) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 07:20:07 | ARUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 3.752000 | Exit: 3.761000 | Leverage: 20.0x | PnL: -0.24% ($-4.80) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 07:27:43 | EIGENUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.379300 | Exit: 0.381000 | Leverage: 20.0x | PnL: -0.45% ($-8.96) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 07:27:43 | ORDIUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 4.503000 | Exit: 4.527000 | Leverage: 20.0x | PnL: -0.53% ($-10.66) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 07:38:13 | HBARUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.113700 | Exit: 0.115600 | Leverage: 20.0x | PnL: -1.67% ($-33.42) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 08:01:05 | BRETTUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.014660 | Exit: 0.014782 | Leverage: 20.0x | PnL: -0.83% ($-16.64) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 08:01:59 | IOUSDT | ВХОД |  | Score: 95 | Entry: 0.158490 | Exit: 0.158240 | Leverage: 20.0x | PnL: +0.16% ($+3.15) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 08:03:01 | SSVUSDT | ВХОД | Памп/Кор | Score: 100 | Entry: 4.481000 | Exit: 4.456000 | Leverage: 20.0x | PnL: +0.56% ($+11.16) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 08:03:01 | ARBUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.200400 | Exit: 0.200300 | Leverage: 20.0x | PnL: +0.05% ($+1.00) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 08:03:01 | AVAXUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 13.554000 | Exit: 13.568000 | Leverage: 20.0x | PnL: -0.10% ($-2.07) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 08:03:01 | DOTUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 1.992000 | Exit: 1.983900 | Leverage: 20.0x | PnL: +0.41% ($+8.13) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 08:03:01 | GMTUSDT | ВХОД |  | Score: 95 | Entry: 0.015270 | Exit: 0.015240 | Leverage: 20.0x | PnL: +0.20% ($+3.93) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 08:05:11 | ENSUSDT | ВХОД |  | Score: 95 | Entry: 9.718000 | Exit: 9.777000 | Leverage: 20.0x | PnL: -0.61% ($-12.14) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 08:05:11 | JTOUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.415900 | Exit: 0.422900 | Leverage: 20.0x | PnL: -1.68% ($-33.66) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 08:05:11 | LDOUSDT | ВХОД |  | Score: 95 | Entry: 0.606200 | Exit: 0.608600 | Leverage: 20.0x | PnL: -0.40% ($-7.92) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 08:20:11 | AAVEUSDT | ВХОД |  | Score: 95 | Entry: 148.920000 | Exit: 150.420000 | Leverage: 20.0x | PnL: -1.01% ($-20.15) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 08:30:31 | ETCUSDT | ВХОД |  | Score: 95 | Entry: 11.986000 | Exit: 12.024000 | Leverage: 20.0x | PnL: -0.32% ($-6.34) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 08:31:01 | IPUSDT | ВХОД | Памп/Кор | Score: 95 | Entry: 2.233200 | Exit: 2.160000 | Leverage: 20.0x | PnL: +3.28% ($+32.78) | Reason: TP2_HIT | Duration: 88m
+2026-01-02 08:44:33 | MONUSDT | ВХОД | Пл/Пад | Score: 100 | Entry: 0.023685 | Exit: 0.024110 | Leverage: 20.0x | PnL: -1.79% ($-17.94) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 08:58:19 | APEUSDT | ВХОД |  | Score: 95 | Entry: 0.211800 | Exit: 0.210400 | Leverage: 20.0x | PnL: +0.66% ($+13.22) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 09:02:55 | BOMEUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.000590 | Exit: 0.000601 | Leverage: 20.0x | PnL: -1.80% ($-35.94) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 09:02:55 | FARTCOINUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.285500 | Exit: 0.288200 | Leverage: 20.0x | PnL: -0.95% ($-18.91) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 09:05:05 | GRTUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.035730 | Exit: 0.035850 | Leverage: 20.0x | PnL: -0.34% ($-6.72) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 09:12:47 | ENAUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.215600 | Exit: 0.218900 | Leverage: 20.0x | PnL: -1.53% ($-30.61) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 09:13:03 | LINEAUSDT | ВХОД |  | Score: 95 | Entry: 0.006657 | Exit: 0.006668 | Leverage: 20.0x | PnL: -0.17% ($-3.30) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 09:13:53 | ETHFIUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.736400 | Exit: 0.738800 | Leverage: 20.0x | PnL: -0.33% ($-6.52) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 09:16:23 | POPCATUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.082630 | Exit: 0.086880 | Leverage: 20.0x | PnL: -5.14% ($-102.87) | Reason: SL_HIT | Duration: 193m
+2026-01-02 09:16:55 | GRIFFAINUSDT | ВХОД | Памп/Кор | Score: 92 | Entry: 0.021660 | Exit: 0.022240 | Leverage: 20.0x | PnL: -2.68% ($-53.55) | Reason: SL_HIT | Duration: 134m
+2026-01-02 09:21:39 | SNXUSDT | ВХОД | Рост/Кор | Score: 98 | Entry: 0.443000 | Exit: 0.445700 | Leverage: 17.8x | PnL: -0.61% ($-10.85) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 09:30:29 | CFXUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.074650 | Exit: 0.075420 | Leverage: 20.0x | PnL: -1.03% ($-20.63) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 10:02:47 | BTCUSDT | ВХОД |  | Score: 95 | Entry: 88579.900000 | Exit: 88916.800000 | Leverage: 20.0x | PnL: -0.38% ($-7.61) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 10:02:53 | SHIB1000USDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.007399 | Exit: 0.007476 | Leverage: 20.0x | PnL: -1.04% ($-20.81) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 10:05:17 | APTUSDT | ВХОД |  | Score: 95 | Entry: 1.857000 | Exit: 1.844000 | Leverage: 20.0x | PnL: +0.70% ($+14.00) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 10:12:29 | SPXUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.501200 | Exit: 0.513500 | Leverage: 20.0x | PnL: -2.45% ($-49.08) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 10:15:05 | RVNUSDT | ВХОД | Рост/Кор | Score: 90 | Entry: 0.007528 | Exit: 0.007461 | Leverage: 20.0x | PnL: +0.89% ($+17.80) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 10:24:33 | SYRUPUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.367800 | Exit: 0.361840 | Leverage: 20.0x | PnL: +1.62% ($+16.20) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 10:25:05 | CYSUSDT | ВХОД | Памп/Кор | Score: 87 | Entry: 0.361600 | Exit: 0.361100 | Leverage: 20.0x | PnL: +0.14% ($+2.77) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 11:00:11 | 1000000MOGUSDT | ВХОД | Памп/Кор | Score: 85 | Entry: 0.257900 | Exit: 0.261600 | Leverage: 20.0x | PnL: -1.43% ($-28.69) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 11:00:43 | ZECUSDT | ВХОД |  | Score: 95 | Entry: 529.010000 | Exit: 522.590000 | Leverage: 20.0x | PnL: +1.21% ($+24.27) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 11:02:11 | COAIUSDT | ВХОД |  | Score: 95 | Entry: 0.412600 | Exit: 0.412900 | Leverage: 20.0x | PnL: -0.07% ($-1.45) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 11:02:45 | PEOPLEUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.010356 | Exit: 0.010350 | Leverage: 20.0x | PnL: +0.06% ($+1.16) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 11:02:45 | NOTUSDT | ВХОД | Рост/Кор | Score: 92 | Entry: 0.000573 | Exit: 0.000569 | Leverage: 20.0x | PnL: +0.68% ($+13.62) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 11:02:51 | OMUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.073490 | Exit: 0.072830 | Leverage: 20.0x | PnL: +0.90% ($+17.96) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 11:03:05 | COOKIEUSDT | ВХОД | Рост/Кор | Score: 100 | Entry: 0.044610 | Exit: 0.044690 | Leverage: 20.0x | PnL: -0.18% ($-3.59) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 11:03:05 | PYTHUSDT | ВХОД |  | Score: 94 | Entry: 0.062020 | Exit: 0.060800 | Leverage: 20.0x | PnL: +1.97% ($+19.67) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 11:05:09 | BATUSDT | ВХОД |  | Score: 95 | Entry: 0.222300 | Exit: 0.218000 | Leverage: 20.0x | PnL: +1.93% ($+19.34) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 11:05:09 | HNTUSDT | ВХОД |  | Score: 95 | Entry: 1.516000 | Exit: 1.504200 | Leverage: 20.0x | PnL: +0.78% ($+15.57) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 11:07:39 | KAITOUSDT | ВХОД |  | Score: 94 | Entry: 0.518700 | Exit: 0.509800 | Leverage: 20.0x | PnL: +1.72% ($+17.16) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 11:12:45 | 1000BONKUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.008352 | Exit: 0.008247 | Leverage: 20.0x | PnL: +1.26% ($+25.14) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 11:12:51 | 1000FLOKIUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.044240 | Exit: 0.043580 | Leverage: 20.0x | PnL: +1.49% ($+14.92) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 11:15:17 | ATOMUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 2.107000 | Exit: 2.084000 | Leverage: 20.0x | PnL: +1.09% ($+21.83) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 11:20:25 | ARUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 3.761000 | Exit: 3.716000 | Leverage: 20.0x | PnL: +1.20% ($+11.96) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 11:27:53 | ADAUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.360300 | Exit: 0.356300 | Leverage: 20.0x | PnL: +1.11% ($+22.20) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 11:27:53 | ALGOUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.121360 | Exit: 0.121400 | Leverage: 20.0x | PnL: -0.03% ($-0.66) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 11:38:17 | BERAUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.657900 | Exit: 0.654800 | Leverage: 20.0x | PnL: +0.47% ($+9.42) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 11:47:35 | ATUSDT | ВХОД |  | Score: 95 | Entry: 0.177880 | Exit: 0.170620 | Leverage: 20.0x | PnL: +4.08% ($+40.81) | Reason: TP2_HIT | Duration: 162m
+2026-01-02 12:01:15 | DYDXUSDT | ВХОД |  | Score: 95 | Entry: 0.182100 | Exit: 0.181200 | Leverage: 20.0x | PnL: +0.49% ($+9.88) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 12:02:03 | MEWUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.000925 | Exit: 0.000917 | Leverage: 20.0x | PnL: +0.84% ($+16.87) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 12:02:39 | HOLOUSDT | ВХОД | Памп/Кор | Score: 91 | Entry: 0.083940 | Exit: 0.086630 | Leverage: 18.4x | PnL: -3.20% ($-58.96) | Reason: SL_HIT | Duration: 45m
+2026-01-02 12:03:05 | AEROUSDT | ВХОД | Памп/Кор | Score: 95 | Entry: 0.470500 | Exit: 0.473300 | Leverage: 20.0x | PnL: -0.60% ($-11.90) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 12:03:05 | ARBUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.200300 | Exit: 0.200700 | Leverage: 20.0x | PnL: -0.20% ($-3.99) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 12:03:05 | ASTERUSDT | ВХОД |  | Score: 95 | Entry: 0.709900 | Exit: 0.711500 | Leverage: 20.0x | PnL: -0.23% ($-4.51) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 12:03:05 | EIGENUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.379400 | Exit: 0.376600 | Leverage: 20.0x | PnL: +0.74% ($+14.76) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 12:03:05 | MINAUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.079000 | Exit: 0.078100 | Leverage: 20.0x | PnL: +1.14% ($+22.78) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 12:05:19 | DOTUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 1.983900 | Exit: 1.974900 | Leverage: 20.0x | PnL: +0.45% ($+9.07) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 12:05:19 | ENSUSDT | ВХОД |  | Score: 95 | Entry: 9.777000 | Exit: 9.767000 | Leverage: 20.0x | PnL: +0.10% ($+2.05) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 12:05:19 | MYXUSDT | ВХОД |  | Score: 95 | Entry: 3.907400 | Exit: 3.846100 | Leverage: 20.0x | PnL: +1.57% ($+15.69) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 12:07:49 | SQDUSDT | ВХОД | Пл/Пад | Score: 100 | Entry: 0.091250 | Exit: 0.096450 | Leverage: 17.9x | PnL: -5.70% ($-102.21) | Reason: SL_HIT | Duration: 217m
+2026-01-02 12:20:19 | AVAXUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 13.554000 | Exit: 13.445000 | Leverage: 20.0x | PnL: +0.80% ($+16.08) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 12:31:15 | AAVEUSDT | ВХОД | Пл/Пад | Score: 95 | Entry: 149.610000 | Exit: 150.200000 | Leverage: 20.0x | PnL: -0.39% ($-7.89) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 12:44:35 | BRETTUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.014710 | Exit: 0.014967 | Leverage: 20.0x | PnL: -1.75% ($-34.94) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 12:58:25 | APEUSDT | ВХОД | Рост/Кор | Score: 100 | Entry: 0.210400 | Exit: 0.210500 | Leverage: 20.0x | PnL: -0.05% ($-0.95) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 13:00:19 | 1000TURBOUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 1.770900 | Exit: 1.832600 | Leverage: 20.0x | PnL: -3.48% ($-69.68) | Reason: SL_HIT | Duration: 119m
+2026-01-02 13:00:19 | HOLOUSDT | ВХОД | Памп/Кор | Score: 95 | Entry: 0.086410 | Exit: 0.082920 | Leverage: 20.0x | PnL: +4.04% ($+40.39) | Reason: TP2_HIT | Duration: 57m
+2026-01-02 13:00:53 | BOMEUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.000596 | Exit: 0.000617 | Leverage: 20.0x | PnL: -3.58% ($-71.51) | Reason: SL_HIT | Duration: 168m
+2026-01-02 13:01:09 | MEWUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.000917 | Exit: 0.000946 | Leverage: 20.0x | PnL: -3.06% ($-61.26) | Reason: SL_HIT | Duration: 55m
+2026-01-02 13:02:57 | KASUSDT | ВХОД |  | Score: 95 | Entry: 0.044340 | Exit: 0.044340 | Leverage: 20.0x | PnL: +0.00% ($+0.00) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 13:02:57 | PENDLEUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 2.050000 | Exit: 2.051200 | Leverage: 20.0x | PnL: -0.06% ($-1.17) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 13:12:51 | IOUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.158600 | Exit: 0.160700 | Leverage: 20.0x | PnL: -1.32% ($-26.48) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 13:13:09 | LDOUSDT | ВХОД |  | Score: 95 | Entry: 0.612400 | Exit: 0.610200 | Leverage: 20.0x | PnL: +0.36% ($+7.18) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 13:14:13 | LITUSDT | ВХОД | Рост/Кор | Score: 90 | Entry: 2.695000 | Exit: 2.646900 | Leverage: 20.0x | PnL: +1.78% ($+17.85) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 13:16:07 | MOODENGUSDT | ВХОД | Рост/Кор | Score: 100 | Entry: 0.073060 | Exit: 0.075360 | Leverage: 20.0x | PnL: -3.15% ($-62.96) | Reason: SL_HIT | Duration: 135m
+2026-01-02 13:16:17 | DOGEUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.128370 | Exit: 0.132910 | Leverage: 20.0x | PnL: -3.54% ($-70.73) | Reason: SL_HIT | Duration: 171m
+2026-01-02 13:16:29 | CELOUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.117080 | Exit: 0.117250 | Leverage: 20.0x | PnL: -0.15% ($-2.90) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 13:17:01 | AXSUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.894000 | Exit: 0.896900 | Leverage: 20.0x | PnL: -0.32% ($-6.49) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 13:21:47 | LINEAUSDT | ВХОД |  | Score: 95 | Entry: 0.006657 | Exit: 0.006705 | Leverage: 20.0x | PnL: -0.72% ($-14.42) | Reason: TIMEOUT | Duration: 240m
+2026-01-02 13:30:37 | OPUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.297800 | Exit: 0.297200 | Leverage: 20.0x | PnL: +0.20% ($+4.03) | Reason: TIMEOUT | Duration: 240m
+2026-01-03 14:09:23 | CFXUSDT | ВХОД |  | Score: 95 | Entry: 0.074930 | Exit: 0.075590 | Leverage: 20.0x | PnL: -0.88% ($-17.62) | Reason: TIMEOUT | Duration: 1686m
+2026-01-03 14:09:23 | ETCUSDT | ВХОД |  | Score: 95 | Entry: 12.068000 | Exit: 12.265000 | Leverage: 20.0x | PnL: -1.63% ($-32.65) | Reason: TIMEOUT | Duration: 1686m
+2026-01-03 14:09:23 | GOATUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.036900 | Exit: 0.036910 | Leverage: 20.0x | PnL: -0.03% ($-0.54) | Reason: TIMEOUT | Duration: 1684m
+2026-01-03 14:09:23 | CHILLGUYUSDT | ВХОД | Памп/Кор | Score: 95 | Entry: 0.019257 | Exit: 0.019623 | Leverage: 20.0x | PnL: -1.90% ($-38.01) | Reason: TIMEOUT | Duration: 1674m
+2026-01-03 14:09:23 | SYRUPUSDT | ВХОД | Рост/Кор | Score: 100 | Entry: 0.361840 | Exit: 0.366300 | Leverage: 20.0x | PnL: -1.23% ($-24.65) | Reason: TIMEOUT | Duration: 1664m
+2026-01-03 14:09:23 | COAIUSDT | ВХОД | Пл/Пад | Score: 95 | Entry: 0.412900 | Exit: 0.417800 | Leverage: 20.0x | PnL: -1.19% ($-23.73) | Reason: TIMEOUT | Duration: 1627m
+2026-01-03 14:09:23 | CRVUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.393600 | Exit: 0.396900 | Leverage: 20.0x | PnL: -0.84% ($-16.77) | Reason: TIMEOUT | Duration: 1626m
+2026-01-03 14:09:23 | GALAUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.006260 | Exit: 0.006691 | Leverage: 20.0x | PnL: -6.88% ($-137.70) | Reason: SL_HIT | Duration: 1626m
+2026-01-03 14:09:23 | GRTUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.035470 | Exit: 0.036060 | Leverage: 20.0x | PnL: -1.66% ($-33.27) | Reason: TIMEOUT | Duration: 1626m
+2026-01-03 14:09:23 | JTOUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.420700 | Exit: 0.441000 | Leverage: 20.0x | PnL: -4.83% ($-96.51) | Reason: SL_HIT | Duration: 1626m
+2026-01-03 14:09:23 | ONDOUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.390900 | Exit: 0.392900 | Leverage: 20.0x | PnL: -0.51% ($-10.23) | Reason: TIMEOUT | Duration: 1626m
+2026-01-03 14:09:23 | 1000PEPEUSDT | ВХОД | Памп/Кор | Score: 95 | Entry: 0.005085 | Exit: 0.005161 | Leverage: 20.0x | PnL: -1.49% ($-29.89) | Reason: TIMEOUT | Duration: 1624m
+2026-01-03 14:09:23 | APTUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 1.842000 | Exit: 1.861000 | Leverage: 20.0x | PnL: -1.03% ($-20.63) | Reason: TIMEOUT | Duration: 1624m
+2026-01-03 14:09:23 | ORDIUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 4.499000 | Exit: 4.521000 | Leverage: 20.0x | PnL: -0.49% ($-9.78) | Reason: TIMEOUT | Duration: 1621m
+2026-01-03 14:09:23 | QTUMUSDT | ВХОД |  | Score: 95 | Entry: 1.336300 | Exit: 1.335200 | Leverage: 20.0x | PnL: +0.08% ($+1.65) | Reason: TIMEOUT | Duration: 1616m
+2026-01-03 14:09:23 | STBLUSDT | ВХОД |  | Score: 93 | Entry: 0.064860 | Exit: 0.064760 | Leverage: 20.0x | PnL: +0.15% ($+3.08) | Reason: TIMEOUT | Duration: 1616m
+2026-01-03 14:09:23 | AVNTUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.361800 | Exit: 0.352600 | Leverage: 20.0x | PnL: +2.54% ($+25.43) | Reason: TIMEOUT | Duration: 1608m
+2026-01-03 14:09:23 | ALGOUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.121400 | Exit: 0.123750 | Leverage: 20.0x | PnL: -1.94% ($-38.71) | Reason: TIMEOUT | Duration: 1601m
+2026-01-03 14:09:23 | BIOUSDT | ВХОД |  | Score: 95 | Entry: 0.045770 | Exit: 0.046130 | Leverage: 20.0x | PnL: -0.79% ($-15.73) | Reason: TIMEOUT | Duration: 1601m
+2026-01-03 14:09:23 | ATOMUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 2.083000 | Exit: 2.184000 | Leverage: 20.0x | PnL: -4.85% ($-96.98) | Reason: SL_HIT | Duration: 1591m
+2026-01-03 14:09:23 | IMXUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.245900 | Exit: 0.247900 | Leverage: 19.9x | PnL: -0.81% ($-16.16) | Reason: TIMEOUT | Duration: 1581m
+2026-01-03 14:09:23 | NEARUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 1.635700 | Exit: 1.649600 | Leverage: 20.0x | PnL: -0.85% ($-17.00) | Reason: TIMEOUT | Duration: 1568m
+2026-01-03 14:09:23 | ENAUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.221000 | Exit: 0.223800 | Leverage: 20.0x | PnL: -1.27% ($-25.34) | Reason: TIMEOUT | Duration: 1566m
+2026-01-03 14:09:23 | ADAUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.357100 | Exit: 0.384600 | Leverage: 20.0x | PnL: -7.70% ($-154.02) | Reason: SL_HIT | Duration: 1566m
+2026-01-03 14:09:23 | ARBUSDT | ВХОД |  | Score: 95 | Entry: 0.200700 | Exit: 0.204900 | Leverage: 20.0x | PnL: -2.09% ($-41.85) | Reason: TIMEOUT | Duration: 1566m
+2026-01-03 14:09:23 | ETHFIUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.744600 | Exit: 0.748600 | Leverage: 20.0x | PnL: -0.54% ($-10.74) | Reason: TIMEOUT | Duration: 1566m
+2026-01-03 14:09:23 | GRASSUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.306300 | Exit: 0.308500 | Leverage: 20.0x | PnL: -0.72% ($-14.37) | Reason: TIMEOUT | Duration: 1566m
+2026-01-03 14:09:23 | HBARUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.115960 | Exit: 0.116000 | Leverage: 20.0x | PnL: -0.03% ($-0.69) | Reason: TIMEOUT | Duration: 1566m
+2026-01-03 14:09:23 | GRIFFAINUSDT | ВХОД | Памп/Кор | Score: 95 | Entry: 0.022140 | Exit: 0.022040 | Leverage: 20.0x | PnL: +0.45% ($+9.03) | Reason: TIMEOUT | Duration: 1563m
+2026-01-03 14:09:23 | OMUSDT | ВХОД |  | Score: 95 | Entry: 0.072780 | Exit: 0.073900 | Leverage: 20.0x | PnL: -1.54% ($-30.78) | Reason: TIMEOUT | Duration: 1563m
+2026-01-03 14:09:23 | LINKUSDT | ВХОД |  | Score: 95 | Entry: 12.904000 | Exit: 13.033000 | Leverage: 20.0x | PnL: -1.00% ($-19.99) | Reason: TIMEOUT | Duration: 1561m
+2026-01-03 14:09:23 | ICNTUSDT | ВХОД |  | Score: 95 | Entry: 0.522300 | Exit: 0.525000 | Leverage: 20.0x | PnL: -0.52% ($-10.34) | Reason: TIMEOUT | Duration: 1548m
+2026-01-03 14:09:23 | SEIUSDT | ВХОД |  | Score: 95 | Entry: 0.116350 | Exit: 0.117630 | Leverage: 20.0x | PnL: -1.10% ($-22.00) | Reason: TIMEOUT | Duration: 1537m
+2026-01-03 14:09:23 | PIEVERSEUSDT | ВХОД | Памп/Кор | Score: 95 | Entry: 0.577000 | Exit: 0.561000 | Leverage: 16.7x | PnL: +2.77% ($+23.19) | Reason: TIMEOUT | Duration: 1524m
+2026-01-03 14:09:23 | SQDUSDT | ВХОД | Рост/Кор | Score: 100 | Entry: 0.094150 | Exit: 0.094150 | Leverage: 16.8x | PnL: +0.00% ($+0.00) | Reason: TIMEOUT | Duration: 1510m
+2026-01-03 14:09:23 | PAXGUSDT | ВХОД |  | Score: 95 | Entry: 4397.400000 | Exit: 4398.700000 | Leverage: 20.0x | PnL: -0.03% ($-0.59) | Reason: TIMEOUT | Duration: 1509m
+2026-01-03 14:09:23 | PEOPLEUSDT | ВХОД |  | Score: 95 | Entry: 0.010463 | Exit: 0.010463 | Leverage: 20.0x | PnL: +0.00% ($+0.00) | Reason: TIMEOUT | Duration: 1509m
+2026-01-03 14:09:23 | ARUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 3.719000 | Exit: 3.713000 | Leverage: 20.0x | PnL: +0.16% ($+3.23) | Reason: TIMEOUT | Duration: 1508m
+2026-01-03 14:09:23 | 1000TURBOUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 1.832300 | Exit: 1.835400 | Leverage: 20.0x | PnL: -0.17% ($-3.38) | Reason: TIMEOUT | Duration: 1508m
+2026-01-03 14:09:23 | BOMEUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.000616 | Exit: 0.000613 | Leverage: 20.0x | PnL: +0.39% ($+7.80) | Reason: TIMEOUT | Duration: 1506m
+2026-01-03 14:09:23 | DOTUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 1.994700 | Exit: 1.993500 | Leverage: 20.0x | PnL: +0.06% ($+1.20) | Reason: TIMEOUT | Duration: 1506m
+2026-01-03 14:09:23 | MANAUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.130580 | Exit: 0.133080 | Leverage: 20.0x | PnL: -1.91% ($-38.29) | Reason: TIMEOUT | Duration: 1496m
+2026-01-03 14:09:23 | CYSUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.362800 | Exit: 0.364500 | Leverage: 18.3x | PnL: -0.47% ($-8.55) | Reason: TIMEOUT | Duration: 1496m
+2026-01-03 14:09:23 | DYDXUSDT | ВХОД |  | Score: 95 | Entry: 0.182400 | Exit: 0.189700 | Leverage: 20.0x | PnL: -4.00% ($-80.04) | Reason: SL_HIT | Duration: 1495m
+2026-01-03 14:09:23 | PENGUUSDT | ВХОД | Рост/Кор | Score: 93 | Entry: 0.010069 | Exit: 0.009982 | Leverage: 20.0x | PnL: +0.86% ($+17.28) | Reason: TIMEOUT | Duration: 1492m
+2026-01-03 14:09:23 | INJUSDT | ВХОД | Рост/Кор | Score: 81 | Entry: 4.608000 | Exit: 4.817000 | Leverage: 20.0x | PnL: -4.54% ($-90.71) | Reason: SL_HIT | Duration: 1492m
+2026-01-03 14:09:23 | AXSUSDT | ВХОД | Рост/Кор | Score: 87 | Entry: 0.896900 | Exit: 0.895700 | Leverage: 20.0x | PnL: +0.13% ($+2.68) | Reason: TIMEOUT | Duration: 1492m
+2026-01-03 14:09:23 | POPCATUSDT | ВХОД | Памп/Кор | Score: 88 | Entry: 0.092350 | Exit: 0.092060 | Leverage: 20.0x | PnL: +0.31% ($+6.28) | Reason: TIMEOUT | Duration: 1491m
+2026-01-03 14:09:23 | SUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.080040 | Exit: 0.079880 | Leverage: 20.0x | PnL: +0.20% ($+4.00) | Reason: TIMEOUT | Duration: 1487m
+2026-01-03 14:09:23 | BATUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.222200 | Exit: 0.222200 | Leverage: 20.0x | PnL: +0.00% ($+0.00) | Reason: TIMEOUT | Duration: 1478m
+2026-01-03 18:52:46 | FOLKSUSDT | ВХОД |  | Score: 92 | Entry: 4.047000 | Exit: 4.023000 | Leverage: 20.0x | PnL: +0.59% ($+11.86) | Reason: TIMEOUT | Duration: 283m
+2026-01-03 18:52:46 | SUIUSDT | ВХОД | Рост/Кор | Score: 87 | Entry: 1.637300 | Exit: 1.654900 | Leverage: 20.0x | PnL: -1.07% ($-21.50) | Reason: TIMEOUT | Duration: 283m
+2026-01-03 18:52:46 | AVAXUSDT | ВХОД |  | Score: 86 | Entry: 13.941000 | Exit: 13.875000 | Leverage: 20.0x | PnL: +0.47% ($+9.47) | Reason: TIMEOUT | Duration: 283m
+2026-01-03 18:52:46 | KAITOUSDT | ВХОД | Рост/Кор | Score: 81 | Entry: 0.572800 | Exit: 0.570700 | Leverage: 17.9x | PnL: +0.37% ($+6.56) | Reason: TIMEOUT | Duration: 283m
+2026-01-03 18:52:46 | VVVUSDT | ВХОД | Рост/Кор | Score: 88 | Entry: 1.809800 | Exit: 1.814000 | Leverage: 16.1x | PnL: -0.23% ($-3.73) | Reason: TIMEOUT | Duration: 277m
+2026-01-03 18:52:46 | DOGEUSDT | ВХОД | Рост/Кор | Score: 84 | Entry: 0.142560 | Exit: 0.142380 | Leverage: 20.0x | PnL: +0.13% ($+2.53) | Reason: TIMEOUT | Duration: 276m
+2026-01-03 23:19:31 | PIPPINUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.394720 | Exit: 0.394720 | Leverage: 20.0x | PnL: +0.00% ($+0.00) | Reason: TIMEOUT | Duration: 495m
+2026-01-03 23:19:31 | FLUIDUSDT | ВХОД | Рост/Кор | Score: 88 | Entry: 3.166000 | Exit: 3.170000 | Leverage: 20.0x | PnL: -0.13% ($-2.53) | Reason: TIMEOUT | Duration: 495m
+2026-01-03 23:19:31 | COAIUSDT | ВХОД | Рост/Кор | Score: 83 | Entry: 0.473600 | Exit: 0.473600 | Leverage: 20.0x | PnL: +0.00% ($+0.00) | Reason: TIMEOUT | Duration: 495m
+2026-01-03 23:19:31 | ZORAUSDT | ВХОД | Памп/Кор | Score: 100 | Entry: 0.043132 | Exit: 0.043132 | Leverage: 18.7x | PnL: +0.00% ($+0.00) | Reason: TIMEOUT | Duration: 266m
+2026-01-03 23:19:31 | XTZUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.532300 | Exit: 0.532300 | Leverage: 20.0x | PnL: +0.00% ($+0.00) | Reason: TIMEOUT | Duration: 266m
+2026-01-03 23:19:31 | MUSDT | ВХОД | Рост/Кор | Score: 84 | Entry: 1.660200 | Exit: 1.660200 | Leverage: 20.0x | PnL: +0.00% ($+0.00) | Reason: TIMEOUT | Duration: 266m
+2026-01-03 23:19:31 | SUIUSDT | ВХОД | Рост/Кор | Score: 90 | Entry: 1.654900 | Exit: 1.639700 | Leverage: 20.0x | PnL: +0.92% ($+18.37) | Reason: TIMEOUT | Duration: 266m
+2026-01-04 02:03:23 | IOUSDT | ВХОД |  | Score: 95 | Entry: 0.171840 | Exit: 0.176220 | Leverage: 20.0x | PnL: -2.55% ($-50.98) | Reason: SL_HIT | Duration: 128m
+2026-01-04 02:13:05 | 1000000MOGUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.303100 | Exit: 0.321700 | Leverage: 20.0x | PnL: -6.14% ($-122.73) | Reason: SL_HIT | Duration: 173m
+2026-01-04 02:48:01 | LABUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.135220 | Exit: 0.139620 | Leverage: 20.0x | PnL: -3.25% ($-65.08) | Reason: SL_HIT | Duration: 44m
+2026-01-04 03:13:35 | JASMYUSDT | ВХОД |  | Score: 93 | Entry: 0.006473 | Exit: 0.006656 | Leverage: 20.0x | PnL: -2.83% ($-56.54) | Reason: SL_HIT | Duration: 61m
+2026-01-04 03:13:35 | PENGUUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.011328 | Exit: 0.011756 | Leverage: 20.0x | PnL: -3.78% ($-75.56) | Reason: SL_HIT | Duration: 12m
+2026-01-04 03:19:32 | WLFIUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.174680 | Exit: 0.175400 | Leverage: 19.4x | PnL: -0.41% ($-8.00) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 03:19:32 | ENSOUSDT | ВХОД |  | Score: 94 | Entry: 0.695500 | Exit: 0.701100 | Leverage: 20.0x | PnL: -0.81% ($-16.10) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 03:55:02 | OPUSDT | ВХОД |  | Score: 95 | Entry: 0.308800 | Exit: 0.312400 | Leverage: 20.0x | PnL: -1.17% ($-23.32) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 03:55:02 | NEARUSDT | ВХОД |  | Score: 88 | Entry: 1.702100 | Exit: 1.710800 | Leverage: 20.0x | PnL: -0.51% ($-10.22) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 04:02:26 | TRUTHUSDT | ВХОД |  | Score: 95 | Entry: 0.009701 | Exit: 0.010135 | Leverage: 20.0x | PnL: -4.47% ($-89.48) | Reason: SL_HIT | Duration: 119m
+2026-01-04 04:02:32 | 1000000MOGUSDT | ВХОД | Памп/Кор | Score: 90 | Entry: 0.321700 | Exit: 0.333000 | Leverage: 20.0x | PnL: -3.51% ($-70.25) | Reason: SL_HIT | Duration: 109m
+2026-01-04 04:04:10 | 1000BONKUSDT | ВХОД |  | Score: 87 | Entry: 0.009292 | Exit: 0.009617 | Leverage: 20.0x | PnL: -3.50% ($-69.95) | Reason: SL_HIT | Duration: 120m
+2026-01-04 04:17:00 | MNTUSDT | ВХОД |  | Score: 93 | Entry: 1.015200 | Exit: 1.042500 | Leverage: 20.0x | PnL: -2.69% ($-53.78) | Reason: SL_HIT | Duration: 133m
+2026-01-04 05:02:20 | 1000000MOGUSDT | ВХОД | Памп/Кор | Score: 95 | Entry: 0.333000 | Exit: 0.342300 | Leverage: 20.0x | PnL: -2.79% ($-55.86) | Reason: SL_HIT | Duration: 59m
+2026-01-04 06:00:34 | GRIFFAINUSDT | ВХОД |  | Score: 86 | Entry: 0.021990 | Exit: 0.022980 | Leverage: 20.0x | PnL: -4.50% ($-90.04) | Reason: SL_HIT | Duration: 197m
+2026-01-04 06:03:24 | FARTCOINUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.357300 | Exit: 0.351400 | Leverage: 20.0x | PnL: +1.65% ($+16.51) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 06:03:24 | MOODENGUSDT | ВХОД |  | Score: 92 | Entry: 0.081260 | Exit: 0.080380 | Leverage: 20.0x | PnL: +1.08% ($+10.83) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 06:03:24 | HYPEUSDT | ВХОД |  | Score: 91 | Entry: 25.343000 | Exit: 25.107000 | Leverage: 20.0x | PnL: +0.93% ($+18.62) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 06:03:24 | RAVEUSDT | ВХОД | Рост/Кор | Score: 89 | Entry: 0.468190 | Exit: 0.456690 | Leverage: 20.0x | PnL: +2.46% ($+24.56) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 06:03:24 | ARKMUSDT | ВХОД |  | Score: 88 | Entry: 0.205100 | Exit: 0.205300 | Leverage: 20.0x | PnL: -0.10% ($-1.95) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 06:03:24 | FOLKSUSDT | ВХОД |  | Score: 88 | Entry: 4.120000 | Exit: 4.159000 | Leverage: 20.0x | PnL: -0.95% ($-18.93) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 06:03:24 | WLDUSDT | ВХОД | Рост/Кор | Score: 85 | Entry: 0.585700 | Exit: 0.582500 | Leverage: 20.0x | PnL: +0.55% ($+10.93) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 06:03:24 | APEUSDT | ВХОД |  | Score: 84 | Entry: 0.217800 | Exit: 0.216700 | Leverage: 20.0x | PnL: +0.51% ($+10.10) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 06:03:24 | XPLUSDT | ВХОД |  | Score: 83 | Entry: 0.197310 | Exit: 0.197180 | Leverage: 20.0x | PnL: +0.07% ($+1.32) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 06:03:24 | INJUSDT | ВХОД |  | Score: 83 | Entry: 4.924000 | Exit: 4.923000 | Leverage: 20.0x | PnL: +0.02% ($+0.41) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 06:03:24 | PNUTUSDT | ВХОД |  | Score: 82 | Entry: 0.083720 | Exit: 0.084410 | Leverage: 20.0x | PnL: -0.82% ($-16.48) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 06:03:24 | EIGENUSDT | ВХОД |  | Score: 81 | Entry: 0.417900 | Exit: 0.417300 | Leverage: 20.0x | PnL: +0.14% ($+2.87) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 06:03:24 | STXUSDT | ВХОД | Рост/Кор | Score: 81 | Entry: 0.302500 | Exit: 0.306500 | Leverage: 20.0x | PnL: -1.32% ($-26.45) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 06:03:30 | IOUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.176220 | Exit: 0.175600 | Leverage: 20.0x | PnL: +0.35% ($+7.04) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 06:11:20 | DYDXUSDT | ВХОД |  | Score: 83 | Entry: 0.195500 | Exit: 0.195900 | Leverage: 20.0x | PnL: -0.20% ($-4.09) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 06:12:18 | MOVEUSDT | ВХОД |  | Score: 94 | Entry: 0.037050 | Exit: 0.037190 | Leverage: 20.0x | PnL: -0.38% ($-7.56) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 06:12:18 | CRVUSDT | ВХОД |  | Score: 89 | Entry: 0.426300 | Exit: 0.427600 | Leverage: 20.0x | PnL: -0.30% ($-6.10) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 06:13:06 | BRETTUSDT | ВХОД |  | Score: 95 | Entry: 0.016780 | Exit: 0.016996 | Leverage: 20.0x | PnL: -1.29% ($-25.74) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 06:13:06 | WIFUSDT | ВХОД | Пл/Пад | Score: 95 | Entry: 0.341400 | Exit: 0.345700 | Leverage: 20.0x | PnL: -1.26% ($-25.19) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 06:13:06 | PUMPFUNUSDT | ВХОД |  | Score: 94 | Entry: 0.002351 | Exit: 0.002301 | Leverage: 20.0x | PnL: +2.13% ($+21.27) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 06:13:06 | GRTUSDT | ВХОД |  | Score: 93 | Entry: 0.038420 | Exit: 0.038550 | Leverage: 20.0x | PnL: -0.34% ($-6.77) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 06:13:06 | LTCUSDT | ВХОД |  | Score: 93 | Entry: 82.230000 | Exit: 82.220000 | Leverage: 20.0x | PnL: +0.01% ($+0.24) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 06:13:06 | POLUSDT | ВХОД |  | Score: 93 | Entry: 0.115340 | Exit: 0.116520 | Leverage: 20.0x | PnL: -1.02% ($-20.46) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 06:13:06 | POPCATUSDT | ВХОД |  | Score: 91 | Entry: 0.098200 | Exit: 0.097690 | Leverage: 20.0x | PnL: +0.52% ($+5.19) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 06:13:06 | ETCUSDT | ВХОД |  | Score: 89 | Entry: 12.571000 | Exit: 12.562000 | Leverage: 20.0x | PnL: +0.07% ($+1.43) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 06:13:06 | PENDLEUSDT | ВХОД |  | Score: 88 | Entry: 2.218100 | Exit: 2.230100 | Leverage: 20.0x | PnL: -0.54% ($-10.82) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 06:13:06 | MONUSDT | ВХОД | Рост/Кор | Score: 85 | Entry: 0.029268 | Exit: 0.028994 | Leverage: 20.0x | PnL: +0.94% ($+18.72) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 06:26:20 | PIPPINUSDT | ВХОД | Памп/Кор | Score: 95 | Entry: 0.474700 | Exit: 0.460390 | Leverage: 20.0x | PnL: +3.01% ($+30.15) | Reason: TP2_HIT | Duration: 15m
+2026-01-04 06:32:56 | BOMEUSDT | ВХОД |  | Score: 91 | Entry: 0.000677 | Exit: 0.000716 | Leverage: 20.0x | PnL: -5.75% ($-114.97) | Reason: SL_HIT | Duration: 212m
+2026-01-04 06:52:54 | STORJUSDT | ВХОД |  | Score: 81 | Entry: 0.132180 | Exit: 0.131900 | Leverage: 20.0x | PnL: +0.21% ($+4.24) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 07:00:40 | OMUSDT | ВХОД |  | Score: 90 | Entry: 0.075600 | Exit: 0.075730 | Leverage: 20.0x | PnL: -0.17% ($-3.44) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 07:00:52 | XMRUSDT | ВХОД |  | Score: 93 | Entry: 434.680000 | Exit: 433.620000 | Leverage: 20.0x | PnL: +0.24% ($+4.88) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 07:02:58 | LABUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.137440 | Exit: 0.136230 | Leverage: 20.0x | PnL: +0.88% ($+17.61) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 07:02:58 | TIAUSDT | ВХОД |  | Score: 95 | Entry: 0.528400 | Exit: 0.538400 | Leverage: 20.0x | PnL: -1.89% ($-37.85) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 07:02:58 | TAOUSDT | ВХОД |  | Score: 93 | Entry: 253.900000 | Exit: 257.460000 | Leverage: 20.0x | PnL: -1.40% ($-28.04) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 07:02:58 | VIRTUALUSDT | ВХОД | Рост/Кор | Score: 93 | Entry: 0.867900 | Exit: 0.870700 | Leverage: 20.0x | PnL: -0.32% ($-3.23) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 07:19:38 | ENSOUSDT | ВХОД |  | Score: 89 | Entry: 0.701100 | Exit: 0.701100 | Leverage: 20.0x | PnL: +0.00% ($+0.00) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 07:39:38 | BCHUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 653.700000 | Exit: 646.200000 | Leverage: 20.0x | PnL: +1.15% ($+11.47) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 08:00:06 | WLFIUSDT | ВХОД | Рост/Кор | Score: 100 | Entry: 0.173580 | Exit: 0.175730 | Leverage: 16.7x | PnL: -1.24% ($-20.72) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 08:00:06 | 1000LUNCUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.043910 | Exit: 0.043280 | Leverage: 20.0x | PnL: +1.43% ($+14.35) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 08:00:32 | LDOUSDT | ВХОД |  | Score: 94 | Entry: 0.622300 | Exit: 0.628000 | Leverage: 20.0x | PnL: -0.92% ($-18.32) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 08:00:42 | SHIB1000USDT | ВХОД |  | Score: 83 | Entry: 0.008159 | Exit: 0.008340 | Leverage: 20.0x | PnL: -2.22% ($-44.37) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 08:02:26 | AERGOUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.067490 | Exit: 0.066470 | Leverage: 20.0x | PnL: +1.51% ($+15.11) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 08:02:26 | ENSUSDT | ВХОД |  | Score: 95 | Entry: 10.254000 | Exit: 10.249000 | Leverage: 20.0x | PnL: +0.05% ($+0.98) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 08:02:26 | ADAUSDT | ВХОД |  | Score: 93 | Entry: 0.393900 | Exit: 0.397300 | Leverage: 20.0x | PnL: -0.86% ($-17.26) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 08:02:26 | SUSDT | ВХОД |  | Score: 93 | Entry: 0.083750 | Exit: 0.084710 | Leverage: 20.0x | PnL: -1.15% ($-22.93) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 08:02:32 | ARBUSDT | ВХОД |  | Score: 95 | Entry: 0.210300 | Exit: 0.211000 | Leverage: 20.0x | PnL: -0.33% ($-6.66) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 08:04:16 | ALGOUSDT | ВХОД |  | Score: 95 | Entry: 0.128640 | Exit: 0.131580 | Leverage: 20.0x | PnL: -2.29% ($-45.71) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 08:04:22 | PIPPINUSDT | ВХОД | Памп/Кор | Score: 100 | Entry: 0.462480 | Exit: 0.475980 | Leverage: 16.7x | PnL: -2.92% ($-48.82) | Reason: SL_HIT | Duration: 85m
+2026-01-04 08:17:08 | TRUTHUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.010180 | Exit: 0.010044 | Leverage: 20.0x | PnL: +1.34% ($+13.36) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 08:58:40 | GRTUSDT | ВХОД |  | Score: 95 | Entry: 0.038980 | Exit: 0.040020 | Leverage: 20.0x | PnL: -2.67% ($-53.36) | Reason: SL_HIT | Duration: 117m
+2026-01-04 08:58:40 | BRETTUSDT | ВХОД |  | Score: 94 | Entry: 0.017341 | Exit: 0.017860 | Leverage: 20.0x | PnL: -2.99% ($-59.86) | Reason: SL_HIT | Duration: 116m
+2026-01-04 08:59:12 | IOUSDT | ВХОД |  | Score: 93 | Entry: 0.175600 | Exit: 0.180050 | Leverage: 20.0x | PnL: -2.53% ($-50.68) | Reason: SL_HIT | Duration: 175m
+2026-01-04 09:02:58 | ATUSDT | ВХОД |  | Score: 93 | Entry: 0.177840 | Exit: 0.174140 | Leverage: 20.0x | PnL: +2.08% ($+20.81) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 10:00:44 | CROUSDT | ВХОД |  | Score: 95 | Entry: 0.101840 | Exit: 0.101870 | Leverage: 20.0x | PnL: -0.03% ($-0.59) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 10:03:30 | SOLUSDT | ВХОД |  | Score: 95 | Entry: 133.680000 | Exit: 133.740000 | Leverage: 20.0x | PnL: -0.04% ($-0.90) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 10:03:30 | TONUSDT | ВХОД |  | Score: 95 | Entry: 1.855000 | Exit: 1.858000 | Leverage: 20.0x | PnL: -0.16% ($-3.23) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 10:03:30 | RENDERUSDT | ВХОД |  | Score: 93 | Entry: 1.819700 | Exit: 1.793500 | Leverage: 18.9x | PnL: +1.44% ($+13.63) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 10:03:30 | FOLKSUSDT | ВХОД |  | Score: 89 | Entry: 4.159000 | Exit: 4.048000 | Leverage: 20.0x | PnL: +2.67% ($+26.69) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 10:03:58 | MNTUSDT | ВХОД |  | Score: 95 | Entry: 1.033100 | Exit: 1.026200 | Leverage: 20.0x | PnL: +0.67% ($+13.36) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 10:05:38 | ETHUSDT | ВХОД |  | Score: 95 | Entry: 3139.800000 | Exit: 3140.460000 | Leverage: 20.0x | PnL: -0.02% ($-0.42) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 10:25:24 | MOVEUSDT | ВХОД |  | Score: 94 | Entry: 0.037060 | Exit: 0.037010 | Leverage: 20.0x | PnL: +0.13% ($+2.70) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 10:25:24 | TRXUSDT | ВХОД |  | Score: 92 | Entry: 0.295080 | Exit: 0.294040 | Leverage: 20.0x | PnL: +0.35% ($+7.05) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 10:26:56 | CRVUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.426200 | Exit: 0.420600 | Leverage: 20.0x | PnL: +1.31% ($+26.28) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 10:31:10 | RIVERUSDT | ВХОД | Пл/Пад | Score: 95 | Entry: 15.643000 | Exit: 16.370000 | Leverage: 20.0x | PnL: -4.65% ($-92.95) | Reason: SL_HIT | Duration: 25m
+2026-01-04 10:37:44 | GRIFFAINUSDT | ВХОД | Рост/Кор | Score: 76 | Entry: 0.022960 | Exit: 0.022620 | Leverage: 20.0x | PnL: +1.48% ($+14.81) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 10:42:46 | LABUSDT | ВХОД | Памп/Кор | Score: 90 | Entry: 0.143230 | Exit: 0.137810 | Leverage: 20.0x | PnL: +3.78% ($+37.84) | Reason: TP2_HIT | Duration: 158m
+2026-01-04 11:00:12 | STRKUSDT | ВХОД |  | Score: 91 | Entry: 0.086860 | Exit: 0.087270 | Leverage: 20.0x | PnL: -0.47% ($-9.44) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 11:00:20 | DYDXUSDT | ВХОД |  | Score: 75 | Entry: 0.196400 | Exit: 0.196500 | Leverage: 20.0x | PnL: -0.05% ($-1.02) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 11:00:38 | EIGENUSDT | ВХОД |  | Score: 86 | Entry: 0.421500 | Exit: 0.417200 | Leverage: 20.0x | PnL: +1.02% ($+20.40) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 11:01:18 | HBARUSDT | ВХОД |  | Score: 95 | Entry: 0.121750 | Exit: 0.122980 | Leverage: 20.0x | PnL: -1.01% ($-20.21) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 11:01:18 | PUMPFUNUSDT | ВХОД |  | Score: 95 | Entry: 0.002340 | Exit: 0.002327 | Leverage: 20.0x | PnL: +0.56% ($+11.11) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 11:01:18 | FARTCOINUSDT | ВХОД |  | Score: 95 | Entry: 0.356900 | Exit: 0.349400 | Leverage: 20.0x | PnL: +2.10% ($+21.01) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 11:01:24 | INJUSDT | ВХОД |  | Score: 88 | Entry: 5.001000 | Exit: 5.000000 | Leverage: 20.0x | PnL: +0.02% ($+0.40) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 11:02:24 | STORJUSDT | ВХОД |  | Score: 95 | Entry: 0.131780 | Exit: 0.130350 | Leverage: 20.0x | PnL: +1.09% ($+21.70) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 11:02:24 | OMUSDT | ВХОД |  | Score: 95 | Entry: 0.076530 | Exit: 0.076700 | Leverage: 20.0x | PnL: -0.22% ($-4.44) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 11:02:24 | ORDIUSDT | ВХОД |  | Score: 93 | Entry: 4.636000 | Exit: 4.617000 | Leverage: 20.0x | PnL: +0.41% ($+8.20) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 11:02:24 | PEOPLEUSDT | ВХОД |  | Score: 93 | Entry: 0.011013 | Exit: 0.011054 | Leverage: 20.0x | PnL: -0.37% ($-7.45) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 11:02:24 | ARKMUSDT | ВХОД |  | Score: 93 | Entry: 0.207000 | Exit: 0.207000 | Leverage: 20.0x | PnL: +0.00% ($+0.00) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 11:02:24 | ETHFIUSDT | ВХОД |  | Score: 92 | Entry: 0.779800 | Exit: 0.775400 | Leverage: 20.0x | PnL: +0.56% ($+11.28) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 11:02:24 | HUSDT | ВХОД | Рост/Кор | Score: 92 | Entry: 0.170780 | Exit: 0.169500 | Leverage: 20.0x | PnL: +0.75% ($+14.99) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 11:02:24 | MAGICUSDT | ВХОД |  | Score: 92 | Entry: 0.099380 | Exit: 0.098530 | Leverage: 20.0x | PnL: +0.86% ($+17.11) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 11:02:24 | SANDUSDT | ВХОД |  | Score: 91 | Entry: 0.120710 | Exit: 0.119990 | Leverage: 20.0x | PnL: +0.60% ($+11.93) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 11:02:24 | PNUTUSDT | ВХОД |  | Score: 90 | Entry: 0.085390 | Exit: 0.086260 | Leverage: 20.0x | PnL: -1.02% ($-20.38) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 11:03:06 | GOATUSDT | ВХОД |  | Score: 95 | Entry: 0.039940 | Exit: 0.040060 | Leverage: 20.0x | PnL: -0.30% ($-6.01) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 11:03:06 | TIAUSDT | ВХОД |  | Score: 95 | Entry: 0.538500 | Exit: 0.543500 | Leverage: 20.0x | PnL: -0.93% ($-18.57) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 11:03:06 | VIRTUALUSDT | ВХОД |  | Score: 94 | Entry: 0.871300 | Exit: 0.865000 | Leverage: 20.0x | PnL: +0.72% ($+7.23) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 11:03:24 | POLYXUSDT | ВХОД |  | Score: 93 | Entry: 0.059190 | Exit: 0.058640 | Leverage: 20.0x | PnL: +0.93% ($+18.58) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 11:19:58 | HYPEUSDT | ВХОД |  | Score: 94 | Entry: 25.275000 | Exit: 25.090000 | Leverage: 20.0x | PnL: +0.73% ($+14.64) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 11:39:56 | BOMEUSDT | ВХОД | Рост/Кор | Score: 93 | Entry: 0.000721 | Exit: 0.000719 | Leverage: 20.0x | PnL: +0.24% ($+2.36) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 11:46:10 | WIFUSDT | ВХОД | Рост/Кор | Score: 100 | Entry: 0.348900 | Exit: 0.359700 | Leverage: 19.1x | PnL: -3.10% ($-59.18) | Reason: SL_HIT | Duration: 225m
+2026-01-04 11:46:40 | 1000NEIROCTOUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.141870 | Exit: 0.145500 | Leverage: 20.0x | PnL: -2.56% ($-51.17) | Reason: SL_HIT | Duration: 226m
+2026-01-04 11:48:36 | PENGUUSDT | ВХОД | Рост/Кор | Score: 80 | Entry: 0.011698 | Exit: 0.012052 | Leverage: 20.0x | PnL: -3.03% ($-60.52) | Reason: SL_HIT | Duration: 225m
+2026-01-04 12:00:26 | WLDUSDT | ВХОД |  | Score: 94 | Entry: 0.588000 | Exit: 0.588800 | Leverage: 20.0x | PnL: -0.14% ($-2.72) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 12:00:50 | ICPUSDT | ВХОД |  | Score: 95 | Entry: 3.168000 | Exit: 3.151000 | Leverage: 20.0x | PnL: +0.54% ($+10.73) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 12:02:54 | XRPUSDT | ВХОД |  | Score: 92 | Entry: 2.056700 | Exit: 2.058300 | Leverage: 20.0x | PnL: -0.08% ($-1.56) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 12:02:54 | POLUSDT | ВХОД |  | Score: 92 | Entry: 0.117630 | Exit: 0.118890 | Leverage: 20.0x | PnL: -1.07% ($-21.42) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 12:02:54 | ADAUSDT | ВХОД |  | Score: 91 | Entry: 0.397300 | Exit: 0.396800 | Leverage: 20.0x | PnL: +0.13% ($+2.52) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 12:02:54 | XMRUSDT | ВХОД |  | Score: 85 | Entry: 435.200000 | Exit: 434.750000 | Leverage: 20.0x | PnL: +0.10% ($+2.07) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 12:04:24 | 1000TURBOUSDT | ВХОД |  | Score: 93 | Entry: 2.067800 | Exit: 2.075500 | Leverage: 20.0x | PnL: -0.37% ($-7.45) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 12:17:14 | BERAUSDT | ВХОД |  | Score: 95 | Entry: 0.674300 | Exit: 0.670800 | Leverage: 20.0x | PnL: +0.52% ($+10.38) | Reason: TIMEOUT | Duration: 240m
+2026-01-04 12:30:46 | GOATUSDT | ВХОД | Рост/Кор | Score: 95 | Entry: 0.040060 | Exit: 0.041340 | Leverage: 20.0x | PnL: -3.20% ($-63.90) | Reason: SL_HIT | Duration: 87m
+2026-01-04 12:33:18 | MEWUSDT | ВХОД | Рост/Кор | Score: 100 | Entry: 0.001041 | Exit: 0.001083 | Leverage: 20.0x | PnL: -4.07% ($-81.48) | Reason: SL_HIT | Duration: 73m
+2026-01-04 12:43:02 | 1000TOSHIUSDT | ВХОД |  | Score: 92 | Entry: 0.340800 | Exit: 0.351800 | Leverage: 20.0x | PnL: -3.23% ($-64.55) | Reason: SL_HIT | Duration: 100m
